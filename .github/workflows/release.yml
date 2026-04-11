@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'   # Declenche sur chaque tag du type v1.0.0, v1.2.3, etc.
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Java 21 installe en premier pour capturer son chemin avant que Java 11 devienne le defaut
+      - name: Set up JDK 21 (fork de compilation)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Capturer le chemin Java 21
+        run: echo "JAVA21_HOME=$JAVA_HOME" >> $GITHUB_ENV
+
+      # Java 11 devient le JDK principal (requis pour Gradle 6.8.1)
+      - name: Set up JDK 11 (daemon Gradle)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Build JAR
+        run: ./gradlew jar -Pjava21Home="$JAVA21_HOME"
+
+      - name: Trouver le JAR produit
+        id: find_jar
+        run: |
+          JAR=$(ls build/libs/*-[0-9]*.jar | grep -v sources | head -1)
+          echo "jar_path=$JAR" >> $GITHUB_OUTPUT
+          echo "jar_name=$(basename $JAR)" >> $GITHUB_OUTPUT
+
+      - name: Creer la release GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "DistrictLife Phone ${{ github.ref_name }}"
+          body: |
+            ## DistrictLife Phone ${{ github.ref_name }}
+
+            **Forge** : 1.16.5-36.2.34
+            **Dependance requise** : [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat) `1.16.5-2.5.36+`
+
+            ### Installation
+            Placer le fichier `.jar` dans le dossier `mods/` de ton serveur/client Forge 1.16.5.
+          files: ${{ steps.find_jar.outputs.jar_path }}
+          fail_on_unmatched_files: true

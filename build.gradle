@@ -93,7 +93,11 @@ dependencies {
 compileJava {
     options.release = 8
     options.fork = true
-    options.forkOptions.javaHome = file('C:/Program Files/Eclipse Adoptium/jdk-21.0.7.6-hotspot')
+    // Chemin Java 21 : override via -Pjava21Home=... (ex: CI) ou fallback local Windows
+    options.forkOptions.javaHome = file(
+        project.findProperty('java21Home') ?:
+        'C:/Program Files/Eclipse Adoptium/jdk-21.0.7.6-hotspot'
+    )
 }
 
 jar {
