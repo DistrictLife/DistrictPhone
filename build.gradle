@@ -1,0 +1,126 @@
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+
+version = "${mod_version}"
+group = "${mod_group_id}"
+archivesBaseName = "${mod_id}"
+
+// Gradle tourne sur Java 11 (compatible Gradle 6.8.1)
+// javac est forke vers Java 21 pour lire voicechat-api (class 60 / Java 16+)
+// --release 8 assure un bytecode Java 8 (class 52) pour Minecraft 1.16.5
+
+println('Java: ' + System.getProperty('java.version') +
+        ' JVM: ' + System.getProperty('java.vm.version') +
+        ' Arch: ' + System.getProperty('os.arch'))
+
+minecraft {
+    mappings channel: 'official', version: '1.16.5'
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                districtlife_phone {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                districtlife_phone {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            args '--mod', 'districtlife_phone',
+                 '--all',
+                 '--output', file('src/generated/resources/'),
+                 '--existing', file('src/main/resources/')
+            mods {
+                districtlife_phone {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        name = "maxhenkel"
+        url  = "https://maven.maxhenkel.de/repository/public"
+    }
+    maven {
+        name = "modrinth"
+        url  = "https://api.modrinth.com/maven"
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // Simple Voice Chat : API pour la compilation (interfaces uniquement, pas de fg.deobf)
+    compileOnly "de.maxhenkel.voicechat:voicechat-api:2.5.36"
+
+    // Simple Voice Chat : mod complet charge automatiquement lors du runClient/runServer
+    implementation fg.deobf("maven.modrinth:simple-voice-chat:forge-1.16.5-2.5.36")
+}
+
+compileJava {
+    options.release = 8
+    options.fork = true
+    options.forkOptions.javaHome = file('C:/Program Files/Eclipse Adoptium/jdk-21.0.7.6-hotspot')
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'     : "${mod_id}",
+            'Specification-Vendor'    : 'DistrictLife',
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : "${version}",
+            'Implementation-Vendor'   : 'DistrictLife',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar')
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/mcmodsrepo"
+        }
+    }
+}

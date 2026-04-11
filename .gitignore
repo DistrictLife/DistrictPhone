@@ -1,0 +1,35 @@
+# Memoire interne Claude Code
+.claude/
+
+# Dossiers de build Gradle
+build/
+.gradle/
+
+# Dossier de run Forge (world, logs, cache client)
+run/
+
+# Fichiers Eclipse
+.classpath
+.project
+.settings/
+
+# Fichiers IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Fichiers VS Code
+.vscode/
+
+# Fichiers generes par ForgeGradle
+src/generated/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Fichiers de dump JVM
+*.hprof
+

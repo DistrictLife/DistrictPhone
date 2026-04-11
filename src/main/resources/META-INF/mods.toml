@@ -1,0 +1,33 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license="All Rights Reserved"
+
+[[mods]]
+    modId="districtlife_phone"
+    version="1.0.0"
+    displayName="DistrictLife Phone"
+    description='''
+        Mod de téléphone RP pour le serveur DistrictLife.
+        Interface smartphone moderne avec appels, SMS, contacts et applications.
+    '''
+
+[[dependencies.districtlife_phone]]
+    modId="forge"
+    mandatory=true
+    versionRange="[36.2.34,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.districtlife_phone]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.16.5,1.17)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.districtlife_phone]]
+    modId="voicechat"
+    mandatory=true
+    versionRange="[1.16.5-2.5.0,)"
+    ordering="BEFORE"
+    side="BOTH"
