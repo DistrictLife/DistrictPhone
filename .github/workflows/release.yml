@@ -48,6 +48,10 @@ jobs:
           path: ~/.gradle/caches/forge_gradle
           key: ${{ runner.os }}-forge-mc1.16.5-forge36.2.34
 
+      # Workaround bug ForgeGradle 4.1.x : MappingFile.write() ne cree pas le dossier parent
+      - name: Pre-creer les dossiers ForgeGradle
+        run: mkdir -p ~/.gradle/caches/forge_gradle/mcp_repo/de/oceanlabs/mcp/mcp_config/1.16.5/
+
       - name: Build JAR
         run: |
           chmod +x gradlew
