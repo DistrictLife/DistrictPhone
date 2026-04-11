@@ -86,8 +86,12 @@ dependencies {
     // Simple Voice Chat : API pour la compilation (interfaces uniquement, pas de fg.deobf)
     compileOnly "de.maxhenkel.voicechat:voicechat-api:2.5.36"
 
-    // Simple Voice Chat : mod complet charge automatiquement lors du runClient/runServer
-    implementation fg.deobf("maven.modrinth:simple-voice-chat:forge-1.16.5-2.5.36")
+    // Simple Voice Chat : mod complet pour runClient/runServer en local uniquement
+    // En CI, fg.deobf() necessite les mappings Minecraft des la resolution des deps (avant extractSrg)
+    // ce qui echoue a froid. Le JAR produit est identique : SVC n'est jamais bundle.
+    if (!System.getenv("CI")) {
+        implementation fg.deobf("maven.modrinth:simple-voice-chat:forge-1.16.5-2.5.36")
+    }
 }
 
 compileJava {
