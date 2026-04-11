@@ -40,7 +40,9 @@ jobs:
           restore-keys: gradle-
 
       - name: Build JAR
-        run: ./gradlew jar -Pjava21Home="$JAVA21_HOME"
+        run: |
+          chmod +x gradlew
+          ./gradlew jar -Pjava21Home="$JAVA21_HOME"
 
       - name: Trouver le JAR produit
         id: find_jar
