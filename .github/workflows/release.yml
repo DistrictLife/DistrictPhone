@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'   # Declenche sur chaque tag du type v1.0.0, v1.2.3, etc.
+      - 'v*'
 
 jobs:
   build-and-release:
@@ -30,19 +30,28 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
 
-      - name: Cache Gradle
+      # Cache separé pour les modules Gradle (change quand les deps changent)
+      - name: Cache Gradle modules
         uses: actions/cache@v4
         with:
           path: |
-            ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: gradle-
+            ~/.gradle/caches/modules-2
+            ~/.gradle/caches/jars-*
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      # Cache separé pour ForgeGradle : mappings Minecraft, tres stable (lie a MC + Forge version)
+      - name: Cache ForgeGradle (mappings Minecraft)
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches/forge_gradle
+          key: ${{ runner.os }}-forge-mc1.16.5-forge36.2.34
 
       - name: Build JAR
         run: |
           chmod +x gradlew
-          ./gradlew jar -Pjava21Home="$JAVA21_HOME"
+          ./gradlew --no-daemon jar -Pjava21Home="$JAVA21_HOME"
 
       - name: Trouver le JAR produit
         id: find_jar
