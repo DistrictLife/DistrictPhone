@@ -47,7 +47,7 @@ public final class CallManager {
         }
 
         ServerPlayerEntity callee = findPlayerByPhone(server, calleePhone);
-        if (callee == null) {
+        if (callee == null || callee == caller) {
             PacketHandler.sendToPlayer(
                     new PacketCallUpdate(PacketCallUpdate.Signal.UNAVAILABLE, calleePhone, 0), caller);
             return;

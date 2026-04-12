@@ -1,8 +1,10 @@
 package com.districtlife.phone;
 
 import com.districtlife.phone.command.PhoneCommand;
+import com.districtlife.phone.events.CommonEvents;
 import com.districtlife.phone.network.PacketHandler;
 import com.districtlife.phone.network.PhoneClientHandler;
+import com.districtlife.phone.news.NewsManager;
 import com.districtlife.phone.registry.ModItems;
 import com.districtlife.phone.screen.hud.PhoneCallHud;
 import net.minecraftforge.api.distmarker.Dist;
@@ -24,6 +26,8 @@ public class PhoneMod {
         PacketHandler.register();
 
         MinecraftForge.EVENT_BUS.addListener(PhoneCommand::onRegisterCommands);
+        MinecraftForge.EVENT_BUS.register(CommonEvents.class);
+        MinecraftForge.EVENT_BUS.addListener(NewsManager::onServerStarting);
 
         // HUD overlay + gestionnaire paquets reseau (client uniquement)
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,

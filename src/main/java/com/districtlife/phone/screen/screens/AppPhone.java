@@ -2,6 +2,7 @@ package com.districtlife.phone.screen.screens;
 
 import com.districtlife.phone.call.CallSignal;
 import com.districtlife.phone.call.PhoneCallState;
+import com.districtlife.phone.call.PhoneCallState.CallState;
 import com.districtlife.phone.capability.Contact;
 import com.districtlife.phone.data.PhoneData;
 import com.districtlife.phone.network.PacketCallSignal;
@@ -37,6 +38,7 @@ public class AppPhone extends AbstractPhoneApp {
     @Override
     public void tick() {
         refreshContacts();
+        PhoneCallState.tickImpossible();
     }
 
     private void refreshContacts() {
@@ -55,10 +57,11 @@ public class AppPhone extends AbstractPhoneApp {
     @Override
     public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
         switch (PhoneCallState.getState()) {
-            case CALLING: renderCalling(stack, mouseX, mouseY); break;
-            case RINGING: renderRinging(stack, mouseX, mouseY); break;
-            case INCALL:  renderInCall(stack, mouseX, mouseY);  break;
-            default:      renderDial(stack, mouseX, mouseY);    break;
+            case CALLING:    renderCalling(stack, mouseX, mouseY);    break;
+            case RINGING:    renderRinging(stack, mouseX, mouseY);    break;
+            case INCALL:     renderInCall(stack, mouseX, mouseY);     break;
+            case IMPOSSIBLE: renderImpossible(stack);                 break;
+            default:         renderDial(stack, mouseX, mouseY);       break;
         }
     }
 
@@ -149,15 +152,15 @@ public class AppPhone extends AbstractPhoneApp {
         drawTitleBar(stack, mouseX, mouseY);
 
         String callerPhone  = PhoneCallState.getOtherPhone();
-        String callerMcName = PhoneCallState.getOtherMcName();
-        String contactName  = resolveDisplayName(callerPhone);
-        String displayName  = contactName.equals(callerPhone) ? callerMcName : contactName;
+        String displayName  = resolveDisplayName(callerPhone);
 
         int cy = phoneY + phoneHeight / 2 - 45;
 
         renderCenteredSmall(stack, "Appel entrant", cy - 10, 0xFF888899);
         renderCenteredBig(stack, displayName, cy + 4);
-        renderCenteredSmall(stack, callerPhone, cy + 20, 0xFF777799);
+        if (!displayName.equals(callerPhone)) {
+            renderCenteredSmall(stack, callerPhone, cy + 20, 0xFF777799);
+        }
 
         // Boutons Repondre / Refuser
         int btnW = 50;
@@ -202,6 +205,16 @@ public class AppPhone extends AbstractPhoneApp {
         renderCenteredSmall(stack, "En communication", cy + 34, 0xFF55BB66);
 
         renderHangupButton(stack, mouseX, mouseY);
+    }
+
+    // -------------------------------------------------------------------------
+    // IMPOSSIBLE — appel non autorise (meme joueur ou cible deconnectee)
+    // -------------------------------------------------------------------------
+
+    private void renderImpossible(MatrixStack stack) {
+        drawTitleBar(stack, -1, -1);
+        int cy = phoneY + phoneHeight / 2 - 10;
+        renderCenteredBig(stack, "Appel impossible", cy);
     }
 
     // -------------------------------------------------------------------------
@@ -357,17 +370,19 @@ public class AppPhone extends AbstractPhoneApp {
     @Override
     public String getTitle() {
         switch (PhoneCallState.getState()) {
-            case CALLING: return "Appel sortant";
-            case RINGING: return "Appel entrant";
-            case INCALL:  return "En communication";
-            default:      return "Telephone";
+            case CALLING:    return "Appel sortant";
+            case RINGING:    return "Appel entrant";
+            case INCALL:     return "En communication";
+            case IMPOSSIBLE: return "Telephone";
+            default:         return "Telephone";
         }
     }
 
     @Override
     public void onBack() {
-        // Bloque la navigation retour pendant un appel
-        if (PhoneCallState.isIdle()) {
+        // Bloque la navigation retour pendant un appel actif
+        CallState s = PhoneCallState.getState();
+        if (s == CallState.IDLE || s == CallState.IMPOSSIBLE) {
             super.onBack();
         }
     }

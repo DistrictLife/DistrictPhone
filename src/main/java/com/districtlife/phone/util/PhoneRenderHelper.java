@@ -67,4 +67,16 @@ public class PhoneRenderHelper {
         int drawX = x + (maxWidth - textWidth) / 2;
         font.draw(stack, text, drawX, y, color);
     }
+
+    /**
+     * Dessine une texture en la redimensionnant dans le rectangle cible.
+     * srcW x srcH = taille reelle de la texture ; dstW x dstH = taille d'affichage.
+     */
+    public static void drawTextureScaled(MatrixStack stack, ResourceLocation texture,
+                                          int x, int y, int dstW, int dstH,
+                                          int srcW, int srcH) {
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        Minecraft.getInstance().getTextureManager().bind(texture);
+        AbstractGui.blit(stack, x, y, dstW, dstH, 0f, 0f, srcW, srcH, srcW, srcH);
+    }
 }

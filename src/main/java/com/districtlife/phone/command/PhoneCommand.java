@@ -3,9 +3,13 @@ package com.districtlife.phone.command;
 import com.districtlife.phone.data.PhoneData;
 import com.districtlife.phone.item.PhoneItem;
 import com.districtlife.phone.network.PacketHandler;
+import com.districtlife.phone.network.PacketReceiveNews;
 import com.districtlife.phone.network.PacketSyncPhone;
+import com.districtlife.phone.news.NewsArticle;
+import com.districtlife.phone.news.NewsManager;
 import com.districtlife.phone.registry.ModItems;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
@@ -21,6 +25,8 @@ public class PhoneCommand {
 
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         register(event.getDispatcher());
+        registerNews(event.getDispatcher());
+        DateCommand.register(event.getDispatcher());
     }
 
     private static void register(CommandDispatcher<CommandSource> dispatcher) {
@@ -37,6 +43,61 @@ public class PhoneCommand {
                                 EntityArgument.getPlayer(ctx, "player")))))
         );
     }
+
+    // -------------------------------------------------------------------------
+    // /news publish <titre> | <contenu>
+    // -------------------------------------------------------------------------
+
+    private static void registerNews(CommandDispatcher<CommandSource> dispatcher) {
+        dispatcher.register(
+            Commands.literal("news")
+                .requires(src -> src.hasPermission(2))
+                .then(Commands.literal("publish")
+                    .then(Commands.argument("text", StringArgumentType.greedyString())
+                        .executes(ctx -> publishNews(
+                                ctx.getSource(),
+                                StringArgumentType.getString(ctx, "text")))))
+        );
+    }
+
+    private static int publishNews(CommandSource source, String text) {
+        String[] parts = text.split("\\|", 2);
+        if (parts.length < 2) {
+            source.sendFailure(new StringTextComponent(
+                    "Usage : /news publish <titre> | <contenu>"));
+            return 0;
+        }
+        String title   = parts[0].trim();
+        String content = parts[1].trim();
+        if (title.isEmpty() || content.isEmpty()) {
+            source.sendFailure(new StringTextComponent("Titre et contenu ne peuvent pas etre vides."));
+            return 0;
+        }
+
+        String author;
+        try {
+            author = source.getPlayerOrException().getDisplayName().getString();
+        } catch (CommandSyntaxException e) {
+            author = source.getTextName();
+        }
+
+        long tickRP = source.getServer().overworld().getGameTime();
+        NewsArticle article = NewsManager.publish(title, author, content, tickRP);
+
+        // Broadcast a tous les joueurs connectes
+        for (ServerPlayerEntity player : source.getServer().getPlayerList().getPlayers()) {
+            PacketHandler.sendToPlayer(new PacketReceiveNews(article), player);
+        }
+
+        source.sendSuccess(
+                new StringTextComponent("Article publie (#" + article.id + ") : " + title),
+                true);
+        return 1;
+    }
+
+    // -------------------------------------------------------------------------
+    // /phone give | reset
+    // -------------------------------------------------------------------------
 
     private static int givePhone(CommandSource source, ServerPlayerEntity target)
             throws CommandSyntaxException {

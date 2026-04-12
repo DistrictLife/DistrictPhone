@@ -8,7 +8,10 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraftforge.common.util.Constants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Acces statique aux donnees stockees dans le NBT du telephone (ItemStack).
@@ -151,6 +154,30 @@ public final class PhoneData {
     }
 
     // -------------------------------------------------------------------------
+    // Photos
+    // -------------------------------------------------------------------------
+
+    public static List<String> getPhotoPaths(ItemStack stack) {
+        if (stack.isEmpty()) return new ArrayList<>();
+        List<String> paths = new ArrayList<>();
+        ListNBT list = get(stack).getList("photos", Constants.NBT.TAG_COMPOUND);
+        for (int i = 0; i < list.size(); i++) {
+            paths.add(list.getCompound(i).getString("path"));
+        }
+        return paths;
+    }
+
+    public static void addPhotoPath(ItemStack stack, String path) {
+        if (stack.isEmpty()) return;
+        CompoundNBT data = get(stack);
+        ListNBT list = data.getList("photos", Constants.NBT.TAG_COMPOUND);
+        CompoundNBT entry = new CompoundNBT();
+        entry.putString("path", path);
+        list.add(entry);
+        data.put("photos", list);
+    }
+
+    // -------------------------------------------------------------------------
     // SMS non lus
     // -------------------------------------------------------------------------
 
@@ -162,5 +189,47 @@ public final class PhoneData {
     public static void setHasUnreadSMS(ItemStack stack, boolean unread) {
         if (stack.isEmpty()) return;
         get(stack).putBoolean("hasUnreadSMS", unread);
+    }
+
+    // -------------------------------------------------------------------------
+    // Applications masquees
+    // -------------------------------------------------------------------------
+
+    /**
+     * Apps masquees par defaut sur tout nouveau telephone.
+     * L'utilisateur peut les reactiver depuis Parametres > Applications.
+     */
+    private static final Set<String> DEFAULT_HIDDEN = new HashSet<>(
+            Arrays.asList("app_camera", "app_gallery"));
+
+    /**
+     * Retourne true si l'application identifiee par appId est masquee sur cet ecran.
+     * appId correspond au nom d'icone ("app_sms", "app_camera", etc.).
+     *
+     * Si la cle NBT n'a jamais ete ecrite (nouveau telephone ou app non configuree),
+     * les apps de DEFAULT_HIDDEN sont masquees d'office.
+     */
+    public static boolean isAppHidden(ItemStack stack, String appId) {
+        if (stack.isEmpty()) return DEFAULT_HIDDEN.contains(appId);
+        CompoundNBT data = get(stack);
+        if (!data.contains("hiddenApps", Constants.NBT.TAG_COMPOUND)) {
+            return DEFAULT_HIDDEN.contains(appId);
+        }
+        CompoundNBT hiddenApps = data.getCompound("hiddenApps");
+        if (!hiddenApps.contains(appId)) {
+            return DEFAULT_HIDDEN.contains(appId);
+        }
+        return hiddenApps.getBoolean(appId);
+    }
+
+    /** Masque ou affiche une application sur cet ecran. */
+    public static void setAppHidden(ItemStack stack, String appId, boolean hidden) {
+        if (stack.isEmpty()) return;
+        CompoundNBT data = get(stack);
+        CompoundNBT hiddenApps = data.contains("hiddenApps", Constants.NBT.TAG_COMPOUND)
+                ? data.getCompound("hiddenApps")
+                : new CompoundNBT();
+        hiddenApps.putBoolean(appId, hidden);
+        data.put("hiddenApps", hiddenApps);
     }
 }

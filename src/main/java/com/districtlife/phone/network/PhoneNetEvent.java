@@ -1,7 +1,10 @@
 package com.districtlife.phone.network;
 
+import com.districtlife.phone.news.NewsArticle;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraftforge.eventbus.api.Event;
+
+import java.util.List;
 
 /**
  * Evenements reseau tires par les paquets SERVER->CLIENT.
@@ -37,5 +40,17 @@ public final class PhoneNetEvent {
             this.signal        = signal;
             this.callStartTick = callStartTick;
         }
+    }
+
+    /** Un nouvel article a ete publie (broadcast en temps reel). */
+    public static class ReceiveNews extends Event {
+        public final NewsArticle article;
+        public ReceiveNews(NewsArticle article) { this.article = article; }
+    }
+
+    /** Synchronisation initiale a la connexion : liste complete des articles. */
+    public static class SyncNews extends Event {
+        public final List<NewsArticle> articles;
+        public SyncNews(List<NewsArticle> articles) { this.articles = articles; }
     }
 }

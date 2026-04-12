@@ -1,8 +1,12 @@
 package com.districtlife.phone.screen.hud;
 
 import com.districtlife.phone.call.PhoneCallState;
+import com.districtlife.phone.capability.Contact;
+import com.districtlife.phone.data.PhoneData;
+import com.districtlife.phone.item.PhoneItem;
 import com.districtlife.phone.screen.PhoneScreen;
 import com.districtlife.phone.util.PhoneRenderHelper;
+import net.minecraft.item.ItemStack;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -40,7 +44,7 @@ public class PhoneCallHud {
 
         switch (state) {
             case RINGING:
-                line1     = "Appel entrant de " + PhoneCallState.getOtherMcName();
+                line1     = "Appel entrant de " + resolveCallerDisplay(mc, PhoneCallState.getOtherPhone());
                 line2     = "Ouvrez votre telephone pour repondre";
                 bgColor   = 0xCC1A3366;
                 textColor = 0xFFFFFFFF;
@@ -70,6 +74,17 @@ public class PhoneCallHud {
         if (!line2.isEmpty()) {
             getFont(mc).draw(stack, line2, (screenW - font.width(line2)) / 2.0F, 14, 0xFFAAAACC);
         }
+    }
+
+    /** Retourne le nom du contact si present dans les contacts, sinon le numero. */
+    private static String resolveCallerDisplay(Minecraft mc, String callerPhone) {
+        if (mc.player == null) return callerPhone;
+        ItemStack phone = PhoneItem.findFirstPhoneStack(mc.player);
+        if (phone.isEmpty()) return callerPhone;
+        for (Contact c : PhoneData.getContacts(phone)) {
+            if (c.getPhoneNumber().equals(callerPhone)) return c.getPseudo();
+        }
+        return callerPhone;
     }
 
     private static FontRenderer getFont(Minecraft mc) {

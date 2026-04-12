@@ -32,6 +32,9 @@ minecraft {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
+            // Remap les refmaps SRG des mods tiers (ex: Camera Mod) vers les noms officiels Mojang
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             mods {
                 districtlife_phone {
                     source sourceSets.main
@@ -43,6 +46,8 @@ minecraft {
             workingDirectory project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             mods {
                 districtlife_phone {
                     source sourceSets.main
@@ -78,6 +83,10 @@ repositories {
         name = "modrinth"
         url  = "https://api.modrinth.com/maven"
     }
+    maven {
+        name = "cursemaven"
+        url  = "https://www.cursemaven.com"
+    }
 }
 
 dependencies {
@@ -92,6 +101,14 @@ dependencies {
     if (!System.getenv("CI")) {
         implementation fg.deobf("maven.modrinth:simple-voice-chat:forge-1.16.5-2.5.36")
     }
+
+    // Camera Mod (henkelmax) 1.16.5 — dependance optionnelle pour l'app appareil photo
+    // Le refmap SRG est remappage vers les noms officiels via mixin.env.remapRefMap dans les runs
+    // CurseForge : https://www.curseforge.com/minecraft/mc-mods/camera-mod/files/3381163
+    if (!System.getenv("CI")) {
+        implementation fg.deobf("curse.maven:camera-mod-289310:3381163")
+    }
+
 }
 
 compileJava {

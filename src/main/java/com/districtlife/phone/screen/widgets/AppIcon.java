@@ -9,10 +9,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import java.util.function.BooleanSupplier;
+
 @OnlyIn(Dist.CLIENT)
 public class AppIcon {
-
-    private static final String ICON_PATH_PREFIX = "districtlife_phone:textures/gui/icons/";
 
     private final int x;
     private final int y;
@@ -20,15 +20,25 @@ public class AppIcon {
     private final String label;
     private final ResourceLocation iconTexture;
     private final AbstractPhoneApp app;
+    /** Fournisseur optionnel du point de notification (null = jamais affiche). */
+    private final BooleanSupplier notifSupplier;
+    private final NotificationDot notificationDot;
 
     public AppIcon(int x, int y, int size, String label, String iconName, AbstractPhoneApp app) {
+        this(x, y, size, label, iconName, app, null);
+    }
+
+    public AppIcon(int x, int y, int size, String label, String iconName,
+                   AbstractPhoneApp app, BooleanSupplier notifSupplier) {
         this.x = x;
         this.y = y;
         this.size = size;
         this.label = label;
         this.iconTexture = new ResourceLocation("districtlife_phone",
                 "textures/gui/icons/" + iconName + ".png");
-        this.app = app;
+        this.app           = app;
+        this.notifSupplier = notifSupplier;
+        this.notificationDot = new NotificationDot(x, y, size);
     }
 
     public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
@@ -52,6 +62,12 @@ public class AppIcon {
         stack.scale(scale, scale, 1.0F);
         font.draw(stack, label, 0, 0, 0xFFFFFFFF);
         stack.popPose();
+
+        // Point de notification (rouge, coin superieur droit)
+        if (notifSupplier != null) {
+            notificationDot.setVisible(notifSupplier.getAsBoolean());
+            notificationDot.render(stack);
+        }
     }
 
     public boolean isHovered(double mouseX, double mouseY) {

@@ -1,6 +1,9 @@
 # Memoire interne Claude Code
 .claude/
 
+# dossier perso 
+doc/
+
 # Dossiers de build Gradle
 build/
 .gradle/

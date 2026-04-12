@@ -51,6 +51,25 @@ public class PacketHandler {
         CHANNEL.registerMessage(id++, PacketCallSignal.class,
                 PacketCallSignal::encode, PacketCallSignal::decode, PacketCallSignal::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        // SERVER -> CLIENT : news
+        CHANNEL.registerMessage(id++, PacketReceiveNews.class,
+                PacketReceiveNews::encode, PacketReceiveNews::decode, PacketReceiveNews::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
+        CHANNEL.registerMessage(id++, PacketSyncNews.class,
+                PacketSyncNews::encode, PacketSyncNews::decode, PacketSyncNews::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
+        // CLIENT -> SERVER : photo
+        CHANNEL.registerMessage(id++, PacketAddPhoto.class,
+                PacketAddPhoto::encode, PacketAddPhoto::decode, PacketAddPhoto::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        // CLIENT -> SERVER : masquage d'application
+        CHANNEL.registerMessage(id++, PacketSetAppHidden.class,
+                PacketSetAppHidden::encode, PacketSetAppHidden::decode, PacketSetAppHidden::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     public static void sendToPlayer(Object packet, ServerPlayerEntity player) {

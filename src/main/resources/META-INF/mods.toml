@@ -31,3 +31,10 @@ license="All Rights Reserved"
     versionRange="[1.16.5-2.5.0,)"
     ordering="BEFORE"
     side="BOTH"
+
+[[dependencies.districtlife_phone]]
+    modId="camera"
+    mandatory=false
+    versionRange="[1.0.0,)"
+    ordering="BEFORE"
+    side="CLIENT"
