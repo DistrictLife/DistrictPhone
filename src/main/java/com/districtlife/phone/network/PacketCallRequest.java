@@ -1,8 +1,7 @@
 package com.districtlife.phone.network;
 
-import com.districtlife.phone.call.PhoneCallState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -10,8 +9,8 @@ import java.util.function.Supplier;
 /** Envoye SERVER -> CLIENT : notifie d'un appel entrant. */
 public class PacketCallRequest {
 
-    private final String callerPhone;
-    private final String callerMcName;
+    final String callerPhone;
+    final String callerMcName;
 
     public PacketCallRequest(String callerPhone, String callerMcName) {
         this.callerPhone  = callerPhone;
@@ -28,11 +27,10 @@ public class PacketCallRequest {
     }
 
     public static void handle(PacketCallRequest packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (Minecraft.getInstance().player == null) return;
-            // Met a jour l'etat client — AppPhone et PhoneCallHud liront cet etat
-            PhoneCallState.setRinging(packet.callerPhone, packet.callerMcName);
-        });
+        ctx.get().enqueueWork(() ->
+            MinecraftForge.EVENT_BUS.post(
+                new PhoneNetEvent.CallRequest(packet.callerPhone, packet.callerMcName))
+        );
         ctx.get().setPacketHandled(true);
     }
 }
