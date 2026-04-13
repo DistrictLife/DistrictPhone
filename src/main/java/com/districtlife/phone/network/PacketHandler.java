@@ -75,6 +75,11 @@ public class PacketHandler {
         CHANNEL.registerMessage(id++, PacketSyncDynmap.class,
                 PacketSyncDynmap::encode, PacketSyncDynmap::decode, PacketSyncDynmap::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
+        // SERVER -> CLIENT : points de carte
+        CHANNEL.registerMessage(id++, PacketSyncMapPoints.class,
+                PacketSyncMapPoints::encode, PacketSyncMapPoints::decode, PacketSyncMapPoints::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendToPlayer(Object packet, ServerPlayerEntity player) {

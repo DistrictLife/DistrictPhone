@@ -1,6 +1,8 @@
 package com.districtlife.phone.screen.screens;
 
 import com.districtlife.phone.dynmap.DynmapClient;
+import com.districtlife.phone.dynmap.MapPoint;
+import com.districtlife.phone.dynmap.MapPointsClient;
 import com.districtlife.phone.screen.AbstractPhoneApp;
 import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -59,8 +61,9 @@ public class AppMap extends AbstractPhoneApp {
     private float   panX       = 0;
     private float   panZ       = 0;
 
-    private boolean isDragging = false;
+    private boolean isDragging  = false;
     private double  dragLastX, dragLastY;
+    private boolean showDebug   = false;
 
     /** Hauteur de la barre de titre (fixee dans AbstractPhoneApp.drawTitleBar) */
     private static final int BAR_H = 16;
@@ -136,6 +139,7 @@ public class AppMap extends AbstractPhoneApp {
         } else {
             drawMapTexture(stack, mapX, mapY, mapW, mapH, pngMinX, pngMinZ, pngVisW, pngVisH);
         }
+        drawMapPoints(stack, mapX, mapY, mapW, mapH, px, pz);
         drawPlayerMarker(stack, mapX, mapY, mapW, mapH,
                 playerPngX, playerPngZ, pngMinX, pngMinZ, pngVisW, pngVisH,
                 mc.player.yRot);
@@ -146,8 +150,8 @@ public class AppMap extends AbstractPhoneApp {
         drawZoomButtons(stack, mouseX, mouseY, mapX, mapY, mapW, mapH);
         drawScaleBar(stack, mapX, mapY, mapH);
 
-        // Debug overlay Dynmap (toujours visible quand une URL est configuree)
-        if (DynmapClient.hasUrl()) {
+        // Debug overlay Dynmap (F3 pour afficher/masquer)
+        if (showDebug && DynmapClient.hasUrl()) {
             String dbg = DynmapClient.getDebugInfo();
             PhoneRenderHelper.fillRect(stack, mapX, mapY + BAR_H, getFont().width(dbg) + 4, 10, 0xCC000000);
             getFont().draw(stack, dbg, mapX + 2, mapY + BAR_H + 1, 0xFFFFFF00);
@@ -388,6 +392,48 @@ public class AppMap extends AbstractPhoneApp {
     }
 
     // -------------------------------------------------------------------------
+    // Dessin – points de carte
+    // -------------------------------------------------------------------------
+
+    /**
+     * Dessine les points d'interet crees par les admins.
+     *
+     * La position ecran d'un point monde (wx, wz) est identique en mode statique
+     * et en mode Dynmap :
+     *   screenX = mapX + mapW/2 + (wx - playerX) * zoom + panX
+     *   screenY = mapY + mapH/2 + (wz - playerZ) * zoom + panZ
+     */
+    private void drawMapPoints(MatrixStack stack,
+                                int mapX, int mapY, int mapW, int mapH,
+                                double playerX, double playerZ) {
+        for (MapPoint p : MapPointsClient.getPoints()) {
+            int sx = mapX + mapW / 2 + (int) Math.round((p.x - playerX) * zoom + panX);
+            int sz = mapY + mapH / 2 + (int) Math.round((p.z - playerZ) * zoom + panZ);
+
+            // Hors de la zone carte : ne pas dessiner
+            if (sx < mapX - 4 || sx > mapX + mapW + 4
+             || sz < mapY - 4 || sz > mapY + mapH + 4) continue;
+
+            // Ombre
+            PhoneRenderHelper.fillRect(stack, sx - 4, sz - 4, 9, 9, 0x99000000);
+            // Carre colore (couleur du point)
+            PhoneRenderHelper.fillRect(stack, sx - 3, sz - 3, 7, 7, p.color);
+            // Reflet blanc central
+            PhoneRenderHelper.fillRect(stack, sx - 1, sz - 1, 3, 3, 0xAAFFFFFF);
+
+            // Nom du point (si suffisamment zooме)
+            if (zoom >= 0.15f) {
+                int textW = getFont().width(p.name);
+                int lx = sx - textW / 2;
+                int ly = sz + 6;
+                // Fond semi-transparent derriere le label
+                PhoneRenderHelper.fillRect(stack, lx - 1, ly - 1, textW + 2, 10, 0xAA000000);
+                getFont().draw(stack, p.name, lx, ly, p.color);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Dessin – controles
     // -------------------------------------------------------------------------
 
@@ -512,6 +558,15 @@ public class AppMap extends AbstractPhoneApp {
     public boolean mouseReleased(double mx, double my, int button) {
         isDragging = false;
         return false;
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 292) { // F3
+            showDebug = !showDebug;
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override

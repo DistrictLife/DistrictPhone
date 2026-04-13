@@ -2,10 +2,14 @@ package com.districtlife.phone.command;
 
 import com.districtlife.phone.data.PhoneData;
 import com.districtlife.phone.dynmap.DynmapConfig;
+import com.districtlife.phone.dynmap.MapPoint;
+import com.districtlife.phone.dynmap.MapPointsData;
 import com.districtlife.phone.item.PhoneItem;
 import com.districtlife.phone.network.PacketHandler;
 import com.districtlife.phone.network.PacketReceiveNews;
 import com.districtlife.phone.network.PacketSyncDynmap;
+import com.districtlife.phone.network.PacketSyncNews;
+import com.districtlife.phone.network.PacketSyncMapPoints;
 import com.districtlife.phone.network.PacketSyncPhone;
 import com.districtlife.phone.news.NewsArticle;
 import com.districtlife.phone.news.NewsManager;
@@ -48,6 +52,12 @@ public class PhoneCommand {
                         .executes(ctx -> setMapUrl(ctx.getSource(),
                                 StringArgumentType.getString(ctx, "url"))))
                     .executes(ctx -> clearMapUrl(ctx.getSource())))
+                .then(Commands.literal("map-point")
+                    .then(Commands.argument("color", StringArgumentType.word())
+                        .then(Commands.argument("name", StringArgumentType.greedyString())
+                            .executes(ctx -> addMapPoint(ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "color"),
+                                    StringArgumentType.getString(ctx, "name"))))))
         );
     }
 
@@ -64,6 +74,11 @@ public class PhoneCommand {
                         .executes(ctx -> publishNews(
                                 ctx.getSource(),
                                 StringArgumentType.getString(ctx, "text")))))
+                .then(Commands.literal("remove")
+                    .then(Commands.argument("cible", StringArgumentType.greedyString())
+                        .executes(ctx -> removeNews(
+                                ctx.getSource(),
+                                StringArgumentType.getString(ctx, "cible")))))
         );
     }
 
@@ -100,6 +115,59 @@ public class PhoneCommand {
                 new StringTextComponent("Article publie (#" + article.id + ") : " + title),
                 true);
         return 1;
+    }
+
+    // -------------------------------------------------------------------------
+    // /news remove <all | N | titre>
+    // -------------------------------------------------------------------------
+
+    private static int removeNews(CommandSource source, String target) {
+        int removed;
+        String feedback;
+
+        String trimmed = target.trim();
+
+        if (trimmed.equalsIgnoreCase("all")) {
+            removed  = NewsManager.removeAll();
+            feedback = removed == 0
+                    ? "\u00A7eAucun article a supprimer."
+                    : "\u00A7a" + removed + " article(s) supprime(s).";
+
+        } else {
+            // Essaie de parser un nombre
+            Integer n = tryParsePositiveInt(trimmed);
+            if (n != null) {
+                removed  = NewsManager.removeRecent(n);
+                feedback = removed == 0
+                        ? "\u00A7eAucun article a supprimer."
+                        : "\u00A7a" + removed + " article(s) recent(s) supprime(s).";
+            } else {
+                // Recherche par titre
+                removed  = NewsManager.removeByTitle(trimmed);
+                feedback = removed == 0
+                        ? "\u00A7eAucun article dont le titre contient \"\u00A7f" + trimmed + "\u00A7e\"."
+                        : "\u00A7a" + removed + " article(s) supprime(s) (titre contient \"\u00A7f" + trimmed + "\u00A7a\").";
+            }
+        }
+
+        // Synchronise la liste mise a jour a tous les joueurs
+        PacketSyncNews syncPkt = new PacketSyncNews(new java.util.ArrayList<>(NewsManager.getAll()));
+        for (ServerPlayerEntity player : source.getServer().getPlayerList().getPlayers()) {
+            PacketHandler.sendToPlayer(syncPkt, player);
+        }
+
+        source.sendSuccess(new StringTextComponent(feedback), true);
+        return removed > 0 ? 1 : 0;
+    }
+
+    /** Retourne l'entier si la chaine est un entier strictement positif, null sinon. */
+    private static Integer tryParsePositiveInt(String s) {
+        try {
+            int v = Integer.parseInt(s);
+            return v > 0 ? v : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -171,6 +239,44 @@ public class PhoneCommand {
 
         source.sendSuccess(
                 new StringTextComponent("\u00A7eURL Dynmap effacee (carte statique)."),
+                true);
+        return 1;
+    }
+
+    // -------------------------------------------------------------------------
+    // /phone map-point <color> <name>
+    // -------------------------------------------------------------------------
+
+    private static int addMapPoint(CommandSource source, String colorStr, String name)
+            throws CommandSyntaxException {
+        // Recupere la position du joueur executant la commande
+        ServerPlayerEntity player = source.getPlayerOrException();
+        int wx = (int) Math.floor(player.getX());
+        int wz = (int) Math.floor(player.getZ());
+
+        // Parse la couleur hex (#RRGGBB ou RRGGBB)
+        String hex = colorStr.startsWith("#") ? colorStr.substring(1) : colorStr;
+        int color;
+        try {
+            color = 0xFF000000 | (int) Long.parseLong(hex, 16);
+        } catch (NumberFormatException e) {
+            source.sendFailure(new StringTextComponent(
+                    "\u00A7cCouleur invalide. Exemples : #FF0000, 00FF00, 0000FF"));
+            return 0;
+        }
+
+        MapPoint point = new MapPoint(name, color, wx, wz);
+        MapPointsData data = MapPointsData.get(source.getServer());
+        data.addPoint(point);
+
+        // Diffuse la liste mise a jour a tous les joueurs
+        PacketSyncMapPoints pkt = new PacketSyncMapPoints(data.getPoints());
+        for (ServerPlayerEntity p : source.getServer().getPlayerList().getPlayers()) {
+            PacketHandler.sendToPlayer(pkt, p);
+        }
+
+        source.sendSuccess(new StringTextComponent(
+                "\u00A7aPoint \"\u00A7f" + name + "\u00A7a\" ajoute en (" + wx + ", " + wz + ")."),
                 true);
         return 1;
     }

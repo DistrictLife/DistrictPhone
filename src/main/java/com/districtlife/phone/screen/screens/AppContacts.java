@@ -152,6 +152,17 @@ public class AppContacts extends AbstractPhoneApp {
                 getFont().draw(stack, num, 0, 0, 0xFF777799);
                 stack.popPose();
 
+                // Bouton appeler (vert) — uniquement si le contact a un numero
+                if (!c.getPhoneNumber().isEmpty()) {
+                    int callX = phoneX + phoneWidth - 28;
+                    int callY = itemY + (ITEM_H - 12) / 2;
+                    boolean callHov = isInBounds(mouseX, mouseY, callX, callY, 12, 12);
+                    PhoneRenderHelper.fillRect(stack, callX, callY, 12, 12,
+                            callHov ? 0xFF33CC55 : 0xFF116633);
+                    getFont().draw(stack, "\u260F", callX + 2, callY + 2,
+                            0xFFFFFFFF);
+                }
+
                 // Bouton supprimer "x"
                 int delX = phoneX + phoneWidth - 14;
                 int delY = itemY + (ITEM_H - 8) / 2;
@@ -260,19 +271,32 @@ public class AppContacts extends AbstractPhoneApp {
             return true;
         }
 
-        // Boutons supprimer sur les lignes
+        // Boutons sur les lignes
         List<Contact> contacts = getFilteredContacts();
         int listTop = phoneY + 33;
         for (int i = scrollOffset; i < contacts.size(); i++) {
             int rel = i - scrollOffset;
             if (rel >= maxVisible) break;
+            Contact c = contacts.get(i);
             int itemY = listTop + rel * ITEM_H;
+
+            // Bouton appeler
+            if (!c.getPhoneNumber().isEmpty()) {
+                int callX = phoneX + phoneWidth - 28;
+                int callY = itemY + (ITEM_H - 12) / 2;
+                if (isInBounds(mx, my, callX, callY, 12, 12)) {
+                    callContact(c);
+                    return true;
+                }
+            }
+
+            // Bouton supprimer
             int delX = phoneX + phoneWidth - 14;
             int delY = itemY + (ITEM_H - 8) / 2;
             if (isInBounds(mx, my, delX, delY - 2, 10, 12)) {
                 PacketHandler.CHANNEL.sendToServer(
                         new PacketRemoveContact(phoneScreen.getPhoneNumber(),
-                                contacts.get(i).getUuid().toString()));
+                                c.getUuid().toString()));
                 return true;
             }
         }
@@ -380,6 +404,13 @@ public class AppContacts extends AbstractPhoneApp {
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    /** Demarre un appel vers un contact et navigue vers AppPhone. */
+    private void callContact(Contact c) {
+        AppPhone appPhone = new AppPhone();
+        phoneScreen.navigateTo(appPhone);
+        appPhone.startCall(c.getPhoneNumber(), c.getPseudo());
+    }
 
     private void openAddForm() {
         state = STATE_ADD;

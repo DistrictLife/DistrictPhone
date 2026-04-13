@@ -60,6 +60,41 @@ public final class NewsManager {
         return Collections.unmodifiableList(articles);
     }
 
+    /**
+     * Supprime tous les articles.
+     * @return nombre d'articles supprimes.
+     */
+    public static int removeAll() {
+        int count = articles.size();
+        articles.clear();
+        save();
+        return count;
+    }
+
+    /**
+     * Supprime les N articles les plus recents (index 0..n-1).
+     * @return nombre d'articles effectivement supprimes.
+     */
+    public static int removeRecent(int n) {
+        int count = Math.min(n, articles.size());
+        for (int i = 0; i < count; i++) articles.remove(0);
+        save();
+        return count;
+    }
+
+    /**
+     * Supprime tous les articles dont le titre contient {@code query} (insensible a la casse).
+     * @return nombre d'articles supprimes.
+     */
+    public static int removeByTitle(String query) {
+        String q = query.toLowerCase(Locale.ROOT);
+        int before = articles.size();
+        articles.removeIf(a -> a.title.toLowerCase(Locale.ROOT).contains(q));
+        int removed = before - articles.size();
+        if (removed > 0) save();
+        return removed;
+    }
+
     // -------------------------------------------------------------------------
     // Persistance JSON
     // -------------------------------------------------------------------------
