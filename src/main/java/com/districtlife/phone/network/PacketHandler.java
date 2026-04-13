@@ -70,6 +70,11 @@ public class PacketHandler {
         CHANNEL.registerMessage(id++, PacketSetAppHidden.class,
                 PacketSetAppHidden::encode, PacketSetAppHidden::decode, PacketSetAppHidden::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
+        // SERVER -> CLIENT : configuration Dynmap
+        CHANNEL.registerMessage(id++, PacketSyncDynmap.class,
+                PacketSyncDynmap::encode, PacketSyncDynmap::decode, PacketSyncDynmap::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendToPlayer(Object packet, ServerPlayerEntity player) {

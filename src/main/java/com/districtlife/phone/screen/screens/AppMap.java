@@ -1,11 +1,16 @@
 package com.districtlife.phone.screen.screens;
 
+import com.districtlife.phone.dynmap.DynmapClient;
 import com.districtlife.phone.screen.AbstractPhoneApp;
 import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldVertexBufferUploader;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -115,8 +120,22 @@ public class AppMap extends AbstractPhoneApp {
         double pngMinX = vcPngX - pngVisW / 2.0;
         double pngMinZ = vcPngZ - pngVisH / 2.0;
 
+        // Enregistre les textures Dynmap terminees (doit etre fait sur le main thread)
+        DynmapClient.processPendingTextures();
+
         // --- Dessin ---
-        drawMapTexture(stack, mapX, mapY, mapW, mapH, pngMinX, pngMinZ, pngVisW, pngVisH);
+        if (DynmapClient.hasUrl()) {
+            if (DynmapClient.isReady()) {
+                drawDynmapTiles(stack, mapX, mapY, mapW, mapH, px, pz);
+            } else {
+                // Decouverte de la configuration en cours
+                PhoneRenderHelper.drawCenteredText(stack, getFont(),
+                        "Chargement de la carte...",
+                        mapX, mapY + mapH / 2 - 4, mapW, 0xFF888888);
+            }
+        } else {
+            drawMapTexture(stack, mapX, mapY, mapW, mapH, pngMinX, pngMinZ, pngVisW, pngVisH);
+        }
         drawPlayerMarker(stack, mapX, mapY, mapW, mapH,
                 playerPngX, playerPngZ, pngMinX, pngMinZ, pngVisW, pngVisH,
                 mc.player.yRot);
@@ -126,6 +145,13 @@ public class AppMap extends AbstractPhoneApp {
         }
         drawZoomButtons(stack, mouseX, mouseY, mapX, mapY, mapW, mapH);
         drawScaleBar(stack, mapX, mapY, mapH);
+
+        // Debug overlay Dynmap (toujours visible quand une URL est configuree)
+        if (DynmapClient.hasUrl()) {
+            String dbg = DynmapClient.getDebugInfo();
+            PhoneRenderHelper.fillRect(stack, mapX, mapY + BAR_H, getFont().width(dbg) + 4, 10, 0xCC000000);
+            getFont().draw(stack, dbg, mapX + 2, mapY + BAR_H + 1, 0xFFFFFF00);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -175,6 +201,139 @@ public class AppMap extends AbstractPhoneApp {
         // blit(stack, dstX, dstY, dstW, dstH, uOffset, vOffset, uWidth, vHeight, texW, texH)
         AbstractGui.blit(stack, dstX, dstY, dstW, dstH,
                 (float) srcU, (float) srcV, srcW, srcH, MAP_PIXELS, MAP_PIXELS);
+    }
+
+    // -------------------------------------------------------------------------
+    // Dessin – tuiles Dynmap
+    // -------------------------------------------------------------------------
+
+    /**
+     * Dessine les tuiles Dynmap visibles dans la zone carte.
+     *
+     * Convention Dynmap flat map (compassview=S) :
+     *   tx = floor(worldX / tileBlocks)
+     *   tz = floor(-worldZ / tileBlocks)   ← tz AUGMENTE vers le nord (-Z)
+     *
+     * Tuile tz couvre worldZ de -(tz+1)*B a -tz*B  (B = tileBlocks).
+     * Dans le PNG : SUD en haut (v=0), NORD en bas (v=tilePixels).
+     * Flip UV vertical pour afficher nord en haut a l'ecran.
+     */
+    private void drawDynmapTiles(MatrixStack stack,
+                                  int mapX, int mapY, int mapW, int mapH,
+                                  double playerBlockX, double playerBlockZ) {
+        int tileBlocksBase = DynmapClient.getTileBlocksBase();
+        int tilePixels     = DynmapClient.getTilePixelSize();
+        int dynzoom        = DynmapClient.selectDynzoom(zoom);
+        int tileBlocks     = tileBlocksBase * (1 << dynzoom);
+
+        double viewCenterX = playerBlockX - panX / (double) zoom;
+        double viewCenterZ = playerBlockZ - panZ / (double) zoom;
+        double halfW       = (mapW / 2.0) / zoom;
+        double halfH       = (mapH / 2.0) / zoom;
+
+        double viewMinX = viewCenterX - halfW;
+        double viewMaxX = viewCenterX + halfW;
+        double viewMinZ = viewCenterZ - halfH; // bord nord (worldZ minimal)
+        double viewMaxZ = viewCenterZ + halfH; // bord sud  (worldZ maximal)
+
+        // tz = floor(-worldZ / tileBlocks)
+        // viewMaxZ (sud) → -viewMaxZ petit → tzMin
+        // viewMinZ (nord) → -viewMinZ grand → tzMax
+        int txMin = (int) Math.floor( viewMinX / tileBlocks) - 1;
+        int txMax = (int) Math.floor( viewMaxX / tileBlocks) + 1;
+        int tzMin = (int) Math.floor(-viewMaxZ / tileBlocks) - 1;
+        int tzMax = (int) Math.floor(-viewMinZ / tileBlocks) + 1;
+
+        // Limiter aux bornes du monde (-2560 a +2560 blocs)
+        final int WORLD_TX_MIN = (int) Math.floor(-2560.0 / tileBlocks);
+        final int WORLD_TX_MAX = (int) Math.floor( 2559.0 / tileBlocks);
+        final int WORLD_TZ_MIN = (int) Math.floor(-2560.0 / tileBlocks); // worldZ=+2560 → tz=-80
+        final int WORLD_TZ_MAX = (int) Math.floor( 2559.0 / tileBlocks); // worldZ=-2560 → tz=+79
+        txMin = Math.max(txMin, WORLD_TX_MIN);
+        txMax = Math.min(txMax, WORLD_TX_MAX);
+        tzMin = Math.max(tzMin, WORLD_TZ_MIN);
+        tzMax = Math.min(tzMax, WORLD_TZ_MAX);
+
+        enableScissor(mapX, mapY, mapW, mapH);
+
+        for (int tz = tzMin; tz <= tzMax; tz++) {
+            for (int tx = txMin; tx <= txMax; tx++) {
+                if (!DynmapClient.bindTile(tx, tz, dynzoom)) continue;
+
+                // Bord nord de la tuile tz : worldZ = -(tz+1)*tileBlocks
+                double worldX_left  =  tx      * (double) tileBlocks;
+                double worldZ_north = -(tz + 1) * (double) tileBlocks;
+
+                int dstX = mapX + (int) Math.round((worldX_left  - viewMinX) * zoom);
+                int dstY = mapY + (int) Math.round((worldZ_north - viewMinZ) * zoom);
+                int dstW = Math.max(1, (int) Math.round(tileBlocks * zoom));
+                int dstH = dstW;
+
+                // Rendu custom avec rotation 90° CCW + V-flip via BufferBuilder.
+                // Le PNG Dynmap a ses axes X/Z transposes : U=monde Z, V=monde X.
+                // Vertex order : BL → BR → TR → TL
+                RenderSystem.color4f(1f, 1f, 1f, 1f);
+                RenderSystem.enableTexture();
+                blitRotated(dstX, dstY, dstW, dstH);
+            }
+        }
+
+        disableScissor();
+    }
+
+    /**
+     * Dessine un quad texture — choisir UNE orientation et commenter les autres.
+     *
+     *  0°  (standard)  : BL(0,1) BR(1,1) TR(1,0) TL(0,0)
+     *  90° (CW)        : BL(1,1) BR(1,0) TR(0,0) TL(0,1)
+     * 180° (V+H flip)  : BL(1,0) BR(0,0) TR(0,1) TL(1,1)
+     * 270° (CCW)       : BL(0,0) BR(0,1) TR(1,1) TL(1,0)
+     */
+    private static void blitRotated(int x, int y, int w, int h) {
+        Tessellator tess = Tessellator.getInstance();
+        BufferBuilder buf = tess.getBuilder();
+        RenderSystem.enableAlphaTest();
+        buf.begin(7, DefaultVertexFormats.POSITION_TEX);
+
+        // 0° — standard
+       buf.vertex(x,     y + h, 0).uv(0f, 1f).endVertex(); // BL
+       buf.vertex(x + w, y + h, 0).uv(1f, 1f).endVertex(); // BR
+       buf.vertex(x + w, y,     0).uv(1f, 0f).endVertex(); // TR
+       buf.vertex(x,     y,     0).uv(0f, 0f).endVertex(); // TL
+
+        // 90° CW
+//        buf.vertex(x,     y + h, 0).uv(1f, 1f).endVertex(); // BL
+//        buf.vertex(x + w, y + h, 0).uv(1f, 0f).endVertex(); // BR
+//        buf.vertex(x + w, y,     0).uv(0f, 0f).endVertex(); // TR
+//        buf.vertex(x,     y,     0).uv(0f, 1f).endVertex(); // TL
+
+        // 180° (V+H flip) — ACTIF
+        // buf.vertex(x,     y + h, 0).uv(1f, 0f).endVertex(); // BL
+        // buf.vertex(x + w, y + h, 0).uv(0f, 0f).endVertex(); // BR
+        // buf.vertex(x + w, y,     0).uv(0f, 1f).endVertex(); // TR
+        // buf.vertex(x,     y,     0).uv(1f, 1f).endVertex(); // TL
+
+        // 270° CCW
+    //    buf.vertex(x,     y + h, 0).uv(0f, 0f).endVertex(); // BL
+    //    buf.vertex(x + w, y + h, 0).uv(0f, 1f).endVertex(); // BR
+    //    buf.vertex(x + w, y,     0).uv(1f, 1f).endVertex(); // TR
+    //    buf.vertex(x,     y,     0).uv(1f, 0f).endVertex(); // TL
+
+        tess.end();
+    }
+
+    private void enableScissor(int x, int y, int w, int h) {
+        Minecraft mc = Minecraft.getInstance();
+        double scale = mc.getWindow().getGuiScale();
+        int sx = (int)(x * scale);
+        int sy = (int)((mc.getWindow().getGuiScaledHeight() - y - h) * scale);
+        int sw = (int)(w * scale);
+        int sh = (int)(h * scale);
+        com.mojang.blaze3d.systems.RenderSystem.enableScissor(sx, sy, sw, sh);
+    }
+
+    private void disableScissor() {
+        com.mojang.blaze3d.systems.RenderSystem.disableScissor();
     }
 
     // -------------------------------------------------------------------------

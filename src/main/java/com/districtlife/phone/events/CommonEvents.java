@@ -1,6 +1,8 @@
 package com.districtlife.phone.events;
 
+import com.districtlife.phone.dynmap.DynmapConfig;
 import com.districtlife.phone.network.PacketHandler;
+import com.districtlife.phone.network.PacketSyncDynmap;
 import com.districtlife.phone.network.PacketSyncNews;
 import com.districtlife.phone.news.NewsArticle;
 import com.districtlife.phone.news.NewsManager;
@@ -28,5 +30,9 @@ public class CommonEvents {
         if (!all.isEmpty()) {
             PacketHandler.sendToPlayer(new PacketSyncNews(new ArrayList<>(all)), player);
         }
+
+        // Envoie la configuration Dynmap (meme si vide, pour reinitialiser le client)
+        String dynmapBaseUrl = DynmapConfig.get(player.getServer()).getBaseUrl();
+        PacketHandler.sendToPlayer(new PacketSyncDynmap(dynmapBaseUrl), player);
     }
 }

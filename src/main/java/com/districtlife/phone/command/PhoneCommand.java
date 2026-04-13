@@ -1,9 +1,11 @@
 package com.districtlife.phone.command;
 
 import com.districtlife.phone.data.PhoneData;
+import com.districtlife.phone.dynmap.DynmapConfig;
 import com.districtlife.phone.item.PhoneItem;
 import com.districtlife.phone.network.PacketHandler;
 import com.districtlife.phone.network.PacketReceiveNews;
+import com.districtlife.phone.network.PacketSyncDynmap;
 import com.districtlife.phone.network.PacketSyncPhone;
 import com.districtlife.phone.news.NewsArticle;
 import com.districtlife.phone.news.NewsManager;
@@ -41,6 +43,11 @@ public class PhoneCommand {
                     .then(Commands.argument("player", EntityArgument.player())
                         .executes(ctx -> resetPhone(ctx.getSource(),
                                 EntityArgument.getPlayer(ctx, "player")))))
+                .then(Commands.literal("map")
+                    .then(Commands.argument("url", StringArgumentType.greedyString())
+                        .executes(ctx -> setMapUrl(ctx.getSource(),
+                                StringArgumentType.getString(ctx, "url"))))
+                    .executes(ctx -> clearMapUrl(ctx.getSource())))
         );
     }
 
@@ -131,6 +138,39 @@ public class PhoneCommand {
         source.sendSuccess(
                 new TranslationTextComponent("command.districtlife_phone.reset.success",
                         target.getDisplayName()),
+                true);
+        return 1;
+    }
+
+    // -------------------------------------------------------------------------
+    // /phone map <url>  |  /phone map  (efface)
+    // -------------------------------------------------------------------------
+
+    private static int setMapUrl(CommandSource source, String url) {
+        DynmapConfig.get(source.getServer()).setBaseUrl(url);
+
+        // Diffuse a tous les joueurs connectes
+        PacketSyncDynmap pkt = new PacketSyncDynmap(url);
+        for (ServerPlayerEntity player : source.getServer().getPlayerList().getPlayers()) {
+            PacketHandler.sendToPlayer(pkt, player);
+        }
+
+        source.sendSuccess(
+                new StringTextComponent("\u00A7aURL Dynmap definie : \u00A7f" + url),
+                true);
+        return 1;
+    }
+
+    private static int clearMapUrl(CommandSource source) {
+        DynmapConfig.get(source.getServer()).setBaseUrl("");
+
+        PacketSyncDynmap pkt = new PacketSyncDynmap("");
+        for (ServerPlayerEntity player : source.getServer().getPlayerList().getPlayers()) {
+            PacketHandler.sendToPlayer(pkt, player);
+        }
+
+        source.sendSuccess(
+                new StringTextComponent("\u00A7eURL Dynmap effacee (carte statique)."),
                 true);
         return 1;
     }
