@@ -1,0 +1,19 @@
+{
+  "item.districtlife_phone.phone": "Téléphone",
+  "item.districtlife_phone.phone.desc": "Votre téléphone RP personnel.",
+
+  "command.districtlife_phone.give.success": "Téléphone donné à %s (numéro : %s).",
+  "command.districtlife_phone.reset.success": "Téléphone de %s réinitialisé.",
+
+  "app.districtlife_phone.soon": "Bientôt disponible",
+  "app.districtlife_phone.unlock": "Appuyer pour déverrouiller",
+
+  "app.districtlife_phone.phone.title": "Téléphone",
+  "app.districtlife_phone.sms.title": "SMS",
+  "app.districtlife_phone.contacts.title": "Contacts",
+  "app.districtlife_phone.map.title": "Map",
+  "app.districtlife_phone.news.title": "News",
+  "app.districtlife_phone.camera.title": "Appareil Photo",
+  "app.districtlife_phone.gallery.title": "Galerie",
+  "app.districtlife_phone.settings.title": "Paramètres"
+}
