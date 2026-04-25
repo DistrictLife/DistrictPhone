@@ -6,6 +6,7 @@ import com.districtlife.phone.dynmap.MapPoint;
 import com.districtlife.phone.dynmap.MapPointsData;
 import com.districtlife.phone.item.PhoneItem;
 import com.districtlife.phone.network.PacketHandler;
+import com.districtlife.phone.network.PacketOpenDebugTexture;
 import com.districtlife.phone.network.PacketReceiveNews;
 import com.districtlife.phone.network.PacketSyncDynmap;
 import com.districtlife.phone.network.PacketSyncNews;
@@ -32,6 +33,7 @@ public class PhoneCommand {
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         register(event.getDispatcher());
         registerNews(event.getDispatcher());
+        registerDebugPhone(event.getDispatcher());
         DateCommand.register(event.getDispatcher());
     }
 
@@ -59,6 +61,31 @@ public class PhoneCommand {
                                     StringArgumentType.getString(ctx, "color"),
                                     StringArgumentType.getString(ctx, "name"))))))
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // /debug-phone <texture>
+    // -------------------------------------------------------------------------
+
+    private static void registerDebugPhone(CommandDispatcher<CommandSource> dispatcher) {
+        dispatcher.register(
+            Commands.literal("debug-phone")
+                .requires(src -> src.hasPermission(2))
+                .then(Commands.argument("texture", StringArgumentType.greedyString())
+                    .executes(ctx -> openDebugTexture(
+                            ctx.getSource(),
+                            StringArgumentType.getString(ctx, "texture"))))
+        );
+    }
+
+    private static int openDebugTexture(CommandSource source, String texturePath)
+            throws CommandSyntaxException {
+        ServerPlayerEntity player = source.getPlayerOrException();
+        PacketHandler.sendToPlayer(new PacketOpenDebugTexture(texturePath.trim()), player);
+        source.sendSuccess(
+                new StringTextComponent("§7[debug-phone] Ouverture : §f" + texturePath.trim()),
+                false);
+        return 1;
     }
 
     // -------------------------------------------------------------------------

@@ -152,15 +152,23 @@ public class AppContacts extends AbstractPhoneApp {
                 getFont().draw(stack, num, 0, 0, 0xFF777799);
                 stack.popPose();
 
-                // Bouton appeler (vert) — uniquement si le contact a un numero
+                // Boutons d'action — uniquement si le contact a un numero
                 if (!c.getPhoneNumber().isEmpty()) {
+                    int btnY = itemY + (ITEM_H - 12) / 2;
+
+                    // Bouton SMS (bleu)
+                    int smsX = phoneX + phoneWidth - 42;
+                    boolean smsHov = isInBounds(mouseX, mouseY, smsX, btnY, 12, 12);
+                    PhoneRenderHelper.fillRect(stack, smsX, btnY, 12, 12,
+                            smsHov ? 0xFF3355CC : 0xFF112266);
+                    getFont().draw(stack, "\u2709", smsX + 2, btnY + 2, 0xFFFFFFFF);
+
+                    // Bouton appeler (vert)
                     int callX = phoneX + phoneWidth - 28;
-                    int callY = itemY + (ITEM_H - 12) / 2;
-                    boolean callHov = isInBounds(mouseX, mouseY, callX, callY, 12, 12);
-                    PhoneRenderHelper.fillRect(stack, callX, callY, 12, 12,
+                    boolean callHov = isInBounds(mouseX, mouseY, callX, btnY, 12, 12);
+                    PhoneRenderHelper.fillRect(stack, callX, btnY, 12, 12,
                             callHov ? 0xFF33CC55 : 0xFF116633);
-                    getFont().draw(stack, "\u260F", callX + 2, callY + 2,
-                            0xFFFFFFFF);
+                    getFont().draw(stack, "\u260F", callX + 2, btnY + 2, 0xFFFFFFFF);
                 }
 
                 // Bouton supprimer "x"
@@ -280,11 +288,20 @@ public class AppContacts extends AbstractPhoneApp {
             Contact c = contacts.get(i);
             int itemY = listTop + rel * ITEM_H;
 
-            // Bouton appeler
+            // Boutons d'action
             if (!c.getPhoneNumber().isEmpty()) {
+                int btnY = itemY + (ITEM_H - 12) / 2;
+
+                // Bouton SMS
+                int smsX = phoneX + phoneWidth - 42;
+                if (isInBounds(mx, my, smsX, btnY, 12, 12)) {
+                    messageContact(c);
+                    return true;
+                }
+
+                // Bouton appeler
                 int callX = phoneX + phoneWidth - 28;
-                int callY = itemY + (ITEM_H - 12) / 2;
-                if (isInBounds(mx, my, callX, callY, 12, 12)) {
+                if (isInBounds(mx, my, callX, btnY, 12, 12)) {
                     callContact(c);
                     return true;
                 }
@@ -410,6 +427,13 @@ public class AppContacts extends AbstractPhoneApp {
         AppPhone appPhone = new AppPhone();
         phoneScreen.navigateTo(appPhone);
         appPhone.startCall(c.getPhoneNumber(), c.getPseudo());
+    }
+
+    /** Ouvre la conversation SMS avec un contact et navigue vers AppSMS. */
+    private void messageContact(Contact c) {
+        AppSMS appSMS = new AppSMS();
+        phoneScreen.navigateTo(appSMS);
+        appSMS.openConversationWith(c.getPhoneNumber());
     }
 
     private void openAddForm() {

@@ -38,9 +38,12 @@ public class PhoneRenderHelper {
     public static void drawTexture(MatrixStack stack, ResourceLocation texture,
                                     int x, int y, int width, int height,
                                     int texWidth, int texHeight) {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         Minecraft.getInstance().getTextureManager().bind(texture);
         AbstractGui.blit(stack, x, y, 0, 0, width, height, texWidth, texHeight);
+        RenderSystem.disableBlend();
     }
 
     /**
@@ -75,8 +78,11 @@ public class PhoneRenderHelper {
     public static void drawTextureScaled(MatrixStack stack, ResourceLocation texture,
                                           int x, int y, int dstW, int dstH,
                                           int srcW, int srcH) {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         Minecraft.getInstance().getTextureManager().bind(texture);
         AbstractGui.blit(stack, x, y, dstW, dstH, 0f, 0f, srcW, srcH, srcW, srcH);
+        RenderSystem.disableBlend();
     }
 }

@@ -112,13 +112,8 @@ dependencies {
 }
 
 compileJava {
-    options.release = 8
-    options.fork = true
-    // Chemin Java 21 : override via -Pjava21Home=... (ex: CI) ou fallback local Windows
-    options.forkOptions.javaHome = file(
-        project.findProperty('java21Home') ?:
-        'C:/Program Files/Eclipse Adoptium/jdk-21.0.7.6-hotspot'
-    )
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
 }
 
 jar {

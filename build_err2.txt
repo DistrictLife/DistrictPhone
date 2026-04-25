@@ -1,0 +1,33 @@
+Could not download MCP Mappings: net.minecraft:mappings_official:1.16.5@zip
+Could not download MCP Mappings: net.minecraft:mappings_official:1.16.5@zip
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Could not resolve all files for configuration ':compileClasspath'.
+   > Could not find maven.modrinth:simple-voice-chat:forge-1.16.5-2.5.36_mapped_official_1.16.5.
+     Searched in the following locations:
+       - file:/C:/Users/roket/.gradle/caches/forge_gradle/bundeled_repo/maven/modrinth/simple-voice-chat/forge-1.16.5-2.5.36_mapped_official_1.16.5/simple-voice-chat-forge-1.16.5-2.5.36_mapped_official_1.16.5.pom
+       - file:/C:/Users/roket/.gradle/caches/forge_gradle/bundeled_repo/maven/modrinth/simple-voice-chat/forge-1.16.5-2.5.36_mapped_official_1.16.5/simple-voice-chat-forge-1.16.5-2.5.36_mapped_official_1.16.5.jar
+     Required by:
+         project :
+   > Could not find curse.maven:camera-mod-289310:3381163_mapped_official_1.16.5.
+     Searched in the following locations:
+       - file:/C:/Users/roket/.gradle/caches/forge_gradle/bundeled_repo/curse/maven/camera-mod-289310/3381163_mapped_official_1.16.5/camera-mod-289310-3381163_mapped_official_1.16.5.pom
+       - file:/C:/Users/roket/.gradle/caches/forge_gradle/bundeled_repo/curse/maven/camera-mod-289310/3381163_mapped_official_1.16.5/camera-mod-289310-3381163_mapped_official_1.16.5.jar
+     Required by:
+         project :
+   > Could not find net.minecraftforge:forge:1.16.5-36.2.34_mapped_official_1.16.5.
+     Searched in the following locations:
+       - file:/C:/Users/roket/.gradle/caches/forge_gradle/bundeled_repo/net/minecraftforge/forge/1.16.5-36.2.34_mapped_official_1.16.5/forge-1.16.5-36.2.34_mapped_official_1.16.5.pom
+       - file:/C:/Users/roket/.gradle/caches/forge_gradle/bundeled_repo/net/minecraftforge/forge/1.16.5-36.2.34_mapped_official_1.16.5/forge-1.16.5-36.2.34_mapped_official_1.16.5.jar
+     Required by:
+         project :
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --debug option to get more log output. Run with --scan to get full insights.
+
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 15s

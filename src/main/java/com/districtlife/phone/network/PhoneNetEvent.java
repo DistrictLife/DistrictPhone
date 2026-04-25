@@ -53,4 +53,10 @@ public final class PhoneNetEvent {
         public final List<NewsArticle> articles;
         public SyncNews(List<NewsArticle> articles) { this.articles = articles; }
     }
+
+    /** Demande d'ouverture du viewer de texture de debug (OP uniquement). */
+    public static class OpenDebugTexture extends Event {
+        public final String texturePath;
+        public OpenDebugTexture(String texturePath) { this.texturePath = texturePath; }
+    }
 }

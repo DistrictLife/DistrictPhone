@@ -5,6 +5,7 @@ import com.districtlife.phone.camera.CameraHelper;
 import com.districtlife.phone.data.PhoneData;
 import com.districtlife.phone.item.PhoneItem;
 import com.districtlife.phone.news.NewsClientCache;
+import com.districtlife.phone.screen.screens.DebugTextureScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
@@ -60,6 +61,11 @@ public class PhoneClientHandler {
     public static void onRenderTick(TickEvent.RenderTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         CameraHelper.onRenderTick();
+    }
+
+    @SubscribeEvent
+    public static void onOpenDebugTexture(PhoneNetEvent.OpenDebugTexture event) {
+        Minecraft.getInstance().setScreen(new DebugTextureScreen(event.texturePath));
     }
 
     @SubscribeEvent

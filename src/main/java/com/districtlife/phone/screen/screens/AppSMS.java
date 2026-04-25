@@ -417,6 +417,11 @@ public class AppSMS extends AbstractPhoneApp {
         PhoneData.setHasUnreadSMS(getPhoneStack(), false);
     }
 
+    /** Permet de naviguer directement vers une conversation depuis une autre app. */
+    public void openConversationWith(String phoneNumber) {
+        openChat(phoneNumber);
+    }
+
     private void sendMessage() {
         String text = inputField.getValue().trim();
         if (text.isEmpty() || chatPhone.isEmpty()) return;

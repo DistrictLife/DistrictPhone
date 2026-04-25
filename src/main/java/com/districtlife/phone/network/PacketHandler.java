@@ -80,6 +80,11 @@ public class PacketHandler {
         CHANNEL.registerMessage(id++, PacketSyncMapPoints.class,
                 PacketSyncMapPoints::encode, PacketSyncMapPoints::decode, PacketSyncMapPoints::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
+        // SERVER -> CLIENT : debug texture viewer (OP uniquement)
+        CHANNEL.registerMessage(id++, PacketOpenDebugTexture.class,
+                PacketOpenDebugTexture::encode, PacketOpenDebugTexture::decode, PacketOpenDebugTexture::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendToPlayer(Object packet, ServerPlayerEntity player) {
