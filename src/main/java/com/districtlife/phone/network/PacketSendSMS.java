@@ -76,6 +76,7 @@ public class PacketSendSMS {
             PacketHandler.sendToPlayer(
                     new PacketSyncPhone(packet.targetPhoneNumber, PhoneData.getRaw(targetStack)),
                     target);
+            PacketHandler.sendToPlayer(new PacketSmsNotify(), target);
         });
         ctx.get().setPacketHandled(true);
     }

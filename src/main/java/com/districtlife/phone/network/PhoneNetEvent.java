@@ -59,4 +59,7 @@ public final class PhoneNetEvent {
         public final String texturePath;
         public OpenDebugTexture(String texturePath) { this.texturePath = texturePath; }
     }
+
+    /** Un SMS entrant vient d'etre recu. */
+    public static class SmsNotify extends Event {}
 }

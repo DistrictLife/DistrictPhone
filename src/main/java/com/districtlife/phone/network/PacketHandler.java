@@ -85,6 +85,11 @@ public class PacketHandler {
         CHANNEL.registerMessage(id++, PacketOpenDebugTexture.class,
                 PacketOpenDebugTexture::encode, PacketOpenDebugTexture::decode, PacketOpenDebugTexture::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
+        // SERVER -> CLIENT : notification SMS entrant
+        CHANNEL.registerMessage(id++, PacketSmsNotify.class,
+                PacketSmsNotify::encode, PacketSmsNotify::decode, PacketSmsNotify::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendToPlayer(Object packet, ServerPlayerEntity player) {

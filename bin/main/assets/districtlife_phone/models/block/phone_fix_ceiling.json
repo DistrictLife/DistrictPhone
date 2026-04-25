@@ -1,0 +1,26 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "front":    "districtlife_phone:block/phone_fix_front",
+    "back":     "districtlife_phone:block/phone_fix_back",
+    "right":    "districtlife_phone:block/phone_fix_right",
+    "left":     "districtlife_phone:block/phone_fix_left",
+    "top":      "districtlife_phone:block/phone_fix_top",
+    "bottom":   "districtlife_phone:block/phone_fix_bottom",
+    "particle": "districtlife_phone:block/phone_fix_front"
+  },
+  "elements": [
+    {
+      "from": [4, 14, 2],
+      "to":   [12, 16, 14],
+      "faces": {
+        "up":    { "uv": [0, 0, 8, 12], "texture": "#back",   "cullface": "up" },
+        "down":  { "uv": [0, 0, 8, 12], "texture": "#front"                    },
+        "north": { "uv": [0, 0, 8,  2], "texture": "#top"    },
+        "south": { "uv": [0, 0, 8,  2], "texture": "#bottom" },
+        "east":  { "uv": [0, 0, 12, 2], "texture": "#right"  },
+        "west":  { "uv": [0, 0, 12, 2], "texture": "#left"   }
+      }
+    }
+  ]
+}

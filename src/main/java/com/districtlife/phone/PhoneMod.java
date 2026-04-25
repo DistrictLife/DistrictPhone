@@ -5,7 +5,9 @@ import com.districtlife.phone.events.CommonEvents;
 import com.districtlife.phone.network.PacketHandler;
 import com.districtlife.phone.network.PhoneClientHandler;
 import com.districtlife.phone.news.NewsManager;
+import com.districtlife.phone.registry.ModBlocks;
 import com.districtlife.phone.registry.ModItems;
+import com.districtlife.phone.registry.ModSounds;
 import com.districtlife.phone.screen.hud.PhoneCallHud;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -22,7 +24,10 @@ public class PhoneMod {
     public PhoneMod() {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 
+        ModBlocks.BLOCKS.register(modBus);
+        ModBlocks.ITEMS.register(modBus);
         ModItems.ITEMS.register(modBus);
+        ModSounds.SOUNDS.register(modBus);
         PacketHandler.register();
 
         MinecraftForge.EVENT_BUS.addListener(PhoneCommand::onRegisterCommands);

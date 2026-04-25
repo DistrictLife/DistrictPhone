@@ -4,6 +4,7 @@ import com.districtlife.phone.data.PhoneData;
 import com.districtlife.phone.dynmap.DynmapConfig;
 import com.districtlife.phone.dynmap.MapPoint;
 import com.districtlife.phone.dynmap.MapPointsData;
+import com.districtlife.phone.item.PhoneFixItem;
 import com.districtlife.phone.item.PhoneItem;
 import com.districtlife.phone.network.PacketHandler;
 import com.districtlife.phone.network.PacketOpenDebugTexture;
@@ -14,6 +15,7 @@ import com.districtlife.phone.network.PacketSyncMapPoints;
 import com.districtlife.phone.network.PacketSyncPhone;
 import com.districtlife.phone.news.NewsArticle;
 import com.districtlife.phone.news.NewsManager;
+import com.districtlife.phone.registry.ModBlocks;
 import com.districtlife.phone.registry.ModItems;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -34,6 +36,7 @@ public class PhoneCommand {
         register(event.getDispatcher());
         registerNews(event.getDispatcher());
         registerDebugPhone(event.getDispatcher());
+        registerPhoneFix(event.getDispatcher());
         DateCommand.register(event.getDispatcher());
     }
 
@@ -304,6 +307,46 @@ public class PhoneCommand {
 
         source.sendSuccess(new StringTextComponent(
                 "\u00A7aPoint \"\u00A7f" + name + "\u00A7a\" ajoute en (" + wx + ", " + wz + ")."),
+                true);
+        return 1;
+    }
+
+    // -------------------------------------------------------------------------
+    // /phone-fix give <numero> <joueur>
+    // -------------------------------------------------------------------------
+
+    private static void registerPhoneFix(CommandDispatcher<CommandSource> dispatcher) {
+        dispatcher.register(
+            Commands.literal("phone-fix")
+                .requires(src -> src.hasPermission(2))
+                .then(Commands.literal("give")
+                    .then(Commands.argument("numero", StringArgumentType.string())
+                        .then(Commands.argument("joueur", EntityArgument.player())
+                            .executes(ctx -> givePhoneFix(
+                                    ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "numero"),
+                                    EntityArgument.getPlayer(ctx, "joueur"))))))
+        );
+    }
+
+    private static int givePhoneFix(CommandSource source, String numero, ServerPlayerEntity target)
+            throws CommandSyntaxException {
+        String digits = numero.replaceAll("[^0-9]", "");
+        if (digits.length() < 2 || digits.length() > 10) {
+            source.sendFailure(new StringTextComponent(
+                    "\u00A7cNumero invalide. Il doit contenir entre 2 et 10 chiffres (saisi : "
+                            + digits.length() + ")."));
+            return 0;
+        }
+
+        ItemStack stack = new ItemStack(ModBlocks.PHONE_FIX_ITEM.get());
+        PhoneFixItem.setPhoneNumber(stack, numero);
+
+        target.inventory.add(stack);
+        source.sendSuccess(
+                new StringTextComponent("\u00A7aBoitier telephonique donne a \u00A7f"
+                        + target.getDisplayName().getString()
+                        + "\u00A7a (numero : \u00A7f" + numero + "\u00A7a)."),
                 true);
         return 1;
     }

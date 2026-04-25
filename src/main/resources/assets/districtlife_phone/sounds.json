@@ -1,0 +1,26 @@
+{
+  "phone.ring": {
+    "category": "master",
+    "sounds": [ { "name": "districtlife_phone:phone/ring", "volume": 1.0, "pitch": 1.0 } ]
+  },
+  "phone.ring_fix": {
+    "category": "master",
+    "sounds": [ { "name": "districtlife_phone:phone/ring_fix", "volume": 1.0, "pitch": 1.0 } ]
+  },
+  "phone.ringback": {
+    "category": "master",
+    "sounds": [ { "name": "districtlife_phone:phone/ringback", "volume": 0.7, "pitch": 1.0 } ]
+  },
+  "phone.hangup": {
+    "category": "master",
+    "sounds": [ { "name": "districtlife_phone:phone/hangup", "volume": 0.8, "pitch": 1.0 } ]
+  },
+  "fx.sms_send": {
+    "category": "master",
+    "sounds": [ { "name": "districtlife_phone:fx/sms_send", "volume": 0.6, "pitch": 1.0 } ]
+  },
+  "fx.sms_receive": {
+    "category": "master",
+    "sounds": [ { "name": "districtlife_phone:fx/sms_receive", "volume": 0.6, "pitch": 1.0 } ]
+  }
+}

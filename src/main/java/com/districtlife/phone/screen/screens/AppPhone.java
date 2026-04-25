@@ -9,6 +9,7 @@ import com.districtlife.phone.capability.Contact;
 import com.districtlife.phone.data.PhoneData;
 import com.districtlife.phone.network.PacketCallSignal;
 import com.districtlife.phone.network.PacketHandler;
+import com.districtlife.phone.registry.ModSounds;
 import com.districtlife.phone.screen.AbstractPhoneApp;
 import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -526,6 +527,8 @@ public class AppPhone extends AbstractPhoneApp {
         PhoneCallState.reset();
         PacketHandler.CHANNEL.sendToServer(
                 new PacketCallSignal(CallSignal.DECLINE, phoneScreen.getPhoneNumber(), callerPhone));
+        if (Minecraft.getInstance().player != null)
+            Minecraft.getInstance().player.playSound(ModSounds.PHONE_HANGUP.get(), 0.8f, 1.0f);
     }
 
     private void hangup() {
@@ -539,6 +542,8 @@ public class AppPhone extends AbstractPhoneApp {
         PhoneCallState.reset();
         PacketHandler.CHANNEL.sendToServer(
                 new PacketCallSignal(CallSignal.HANGUP, phoneScreen.getPhoneNumber(), ""));
+        if (Minecraft.getInstance().player != null)
+            Minecraft.getInstance().player.playSound(ModSounds.PHONE_HANGUP.get(), 0.8f, 1.0f);
     }
 
     // -------------------------------------------------------------------------

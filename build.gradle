@@ -35,6 +35,21 @@ minecraft {
             // Remap les refmaps SRG des mods tiers (ex: Camera Mod) vers les noms officiels Mojang
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            args '--username', 'dev', '--accessToken', 'dev_token', '--uuid', '00000000-0000-0000-0000-000000000001'
+            mods {
+                districtlife_phone {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client2 {
+            workingDirectory project.file('run2')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            args '--username', 'test', '--accessToken', 'test_token', '--uuid', '00000000-0000-0000-0000-000000000002'
             mods {
                 districtlife_phone {
                     source sourceSets.main
@@ -114,6 +129,7 @@ dependencies {
 compileJava {
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
+    options.encoding = 'UTF-8'
 }
 
 jar {

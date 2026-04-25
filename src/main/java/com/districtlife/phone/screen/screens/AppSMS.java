@@ -5,6 +5,7 @@ import com.districtlife.phone.capability.Conversation;
 import com.districtlife.phone.data.PhoneData;
 import com.districtlife.phone.network.PacketHandler;
 import com.districtlife.phone.network.PacketSendSMS;
+import com.districtlife.phone.registry.ModSounds;
 import com.districtlife.phone.screen.AbstractPhoneApp;
 import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
@@ -429,6 +430,8 @@ public class AppSMS extends AbstractPhoneApp {
                 new PacketSendSMS(phoneScreen.getPhoneNumber(), chatPhone, text));
         inputField.setValue("");
         chatScroll = 0;
+        if (Minecraft.getInstance().player != null)
+            Minecraft.getInstance().player.playSound(ModSounds.FX_SMS_SEND.get(), 0.6f, 1.0f);
     }
 
     private List<Conversation> getConversations() {
