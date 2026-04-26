@@ -8,6 +8,7 @@ import com.districtlife.phone.news.NewsManager;
 import com.districtlife.phone.registry.ModBlocks;
 import com.districtlife.phone.registry.ModItems;
 import com.districtlife.phone.registry.ModSounds;
+import com.districtlife.phone.registry.ModTileEntities;
 import com.districtlife.phone.screen.hud.PhoneCallHud;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -28,6 +29,7 @@ public class PhoneMod {
         ModBlocks.ITEMS.register(modBus);
         ModItems.ITEMS.register(modBus);
         ModSounds.SOUNDS.register(modBus);
+        ModTileEntities.TILE_ENTITIES.register(modBus);
         PacketHandler.register();
 
         MinecraftForge.EVENT_BUS.addListener(PhoneCommand::onRegisterCommands);

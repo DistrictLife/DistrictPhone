@@ -90,6 +90,16 @@ public class PacketHandler {
         CHANNEL.registerMessage(id++, PacketSmsNotify.class,
                 PacketSmsNotify::encode, PacketSmsNotify::decode, PacketSmsNotify::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
+        // SERVER -> CLIENT : ouvre l'ecran du boitier telephonique
+        CHANNEL.registerMessage(id++, PacketOpenPhoneFix.class,
+                PacketOpenPhoneFix::encode, PacketOpenPhoneFix::decode, PacketOpenPhoneFix::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+
+        // CLIENT -> SERVER : signaux d'appel depuis un boitier telephonique
+        CHANNEL.registerMessage(id++, PacketCallSignalFix.class,
+                PacketCallSignalFix::encode, PacketCallSignalFix::decode, PacketCallSignalFix::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 
     public static void sendToPlayer(Object packet, ServerPlayerEntity player) {

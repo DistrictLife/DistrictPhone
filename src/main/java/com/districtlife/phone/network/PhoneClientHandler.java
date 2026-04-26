@@ -7,9 +7,12 @@ import com.districtlife.phone.data.PhoneData;
 import com.districtlife.phone.item.PhoneItem;
 import com.districtlife.phone.news.NewsClientCache;
 import com.districtlife.phone.registry.ModSounds;
+import com.districtlife.phone.screen.PhoneFixScreen;
 import com.districtlife.phone.screen.screens.DebugTextureScreen;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.SoundEvent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.TickEvent;
@@ -27,8 +30,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 @OnlyIn(Dist.CLIENT)
 public class PhoneClientHandler {
 
-    // Repete la sonnerie toutes les 80 ticks (4 s) tant que l'etat ne change pas
     private static int ringTick = 0;
+    private static SimpleSound activeRingSound = null;
 
     @SubscribeEvent
     public static void onSyncPhone(PhoneNetEvent.SyncPhone event) {
@@ -67,14 +70,28 @@ public class PhoneClientHandler {
         CallState state = PhoneCallState.getState();
         if (state == CallState.RINGING) {
             if (ringTick % 80 == 0)
-                mc.player.playSound(ModSounds.PHONE_RING.get(), 1.0f, 1.0f);
+                playRing(mc, ModSounds.PHONE_RING.get(), 1.0f);
             ringTick++;
         } else if (state == CallState.CALLING) {
             if (ringTick % 80 == 0)
-                mc.player.playSound(ModSounds.PHONE_RINGBACK.get(), 0.7f, 1.0f);
+                playRing(mc, ModSounds.PHONE_RINGBACK.get(), 0.7f);
             ringTick++;
         } else {
+            stopRing(mc);
             ringTick = 0;
+        }
+    }
+
+    private static void playRing(Minecraft mc, SoundEvent soundEvent, float volume) {
+        stopRing(mc);
+        activeRingSound = SimpleSound.forUI(soundEvent, volume);
+        mc.getSoundManager().play(activeRingSound);
+    }
+
+    private static void stopRing(Minecraft mc) {
+        if (activeRingSound != null) {
+            mc.getSoundManager().stop(activeRingSound);
+            activeRingSound = null;
         }
     }
 
@@ -97,20 +114,38 @@ public class PhoneClientHandler {
     }
 
     @SubscribeEvent
+    public static void onOpenPhoneFix(PhoneNetEvent.OpenPhoneFix event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+
+        // Si le boitier est en train de sonner, initialise l'etat local
+        if (!event.pendingCaller.isEmpty()) {
+            PhoneCallState.setRinging(event.pendingCaller, event.pendingCaller);
+        }
+
+        mc.setScreen(new PhoneFixScreen(
+                event.phoneNumber, event.blockPos,
+                event.pendingCaller, event.activeCall));
+    }
+
+    @SubscribeEvent
     public static void onCallUpdate(PhoneNetEvent.CallUpdate event) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         switch (event.signal) {
             case ACCEPTED:
+                stopRing(mc);
                 PhoneCallState.setInCall(event.callStartTick);
                 break;
             case DECLINED:
             case ENDED:
+                stopRing(mc);
                 PhoneCallState.reset();
                 mc.player.playSound(ModSounds.PHONE_HANGUP.get(), 0.8f, 1.0f);
                 break;
             case BUSY:
             case UNAVAILABLE:
+                stopRing(mc);
                 PhoneCallState.setImpossible();
                 mc.player.playSound(ModSounds.PHONE_HANGUP.get(), 0.8f, 1.0f);
                 break;

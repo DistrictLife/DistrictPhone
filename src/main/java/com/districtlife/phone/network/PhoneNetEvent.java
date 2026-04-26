@@ -2,6 +2,7 @@ package com.districtlife.phone.network;
 
 import com.districtlife.phone.news.NewsArticle;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.eventbus.api.Event;
 
 import java.util.List;
@@ -62,4 +63,19 @@ public final class PhoneNetEvent {
 
     /** Un SMS entrant vient d'etre recu. */
     public static class SmsNotify extends Event {}
+
+    /** Ouvre l'ecran du boitier telephonique. */
+    public static class OpenPhoneFix extends Event {
+        public final String   phoneNumber;
+        public final String   pendingCaller;
+        public final String   activeCall;
+        public final BlockPos blockPos;
+        public OpenPhoneFix(String phoneNumber, String pendingCaller,
+                             String activeCall, BlockPos blockPos) {
+            this.phoneNumber   = phoneNumber;
+            this.pendingCaller = pendingCaller;
+            this.activeCall    = activeCall;
+            this.blockPos      = blockPos;
+        }
+    }
 }
