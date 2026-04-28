@@ -5,19 +5,29 @@ import com.districtlife.phone.call.PhoneCallState;
 import com.districtlife.phone.call.PhoneCallState.CallState;
 import com.districtlife.phone.network.PacketCallSignalFix;
 import com.districtlife.phone.network.PacketHandler;
+import com.districtlife.phone.network.PhoneClientHandler;
+import com.districtlife.phone.registry.ModSounds;
+import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import com.districtlife.phone.util.PhoneFont;
 
 @OnlyIn(Dist.CLIENT)
 public class PhoneFixScreen extends Screen {
 
     private static final int W = 180;
     private static final int H = 200;
+
+    private static final ResourceLocation TEX_BG_OUTER  = new ResourceLocation("districtlife_phone", "textures/gui/fix/bg_outer.png");
+    private static final ResourceLocation TEX_BG_INNER  = new ResourceLocation("districtlife_phone", "textures/gui/fix/bg_inner.png");
+    private static final ResourceLocation TEX_HEADER    = new ResourceLocation("districtlife_phone", "textures/gui/fix/header.png");
+    private static final ResourceLocation TEX_SEPARATOR = new ResourceLocation("districtlife_phone", "textures/gui/fix/separator.png");
 
     private final String   fixPhone;
     private final BlockPos blockPos;
@@ -105,20 +115,19 @@ public class PhoneFixScreen extends Screen {
 
     @Override
     public void tick() {
-        // Synchronise l'etat de l'ecran avec PhoneCallState
+        PhoneCallState.tickImpossible();
+
         CallState state = PhoneCallState.getState();
         if (state == CallState.INCALL) {
             activeCall    = PhoneCallState.getOtherPhone();
             pendingCaller = "";
         } else if (state == CallState.CALLING) {
             pendingCaller = "";
-            // activeCall conserve la cible composee
         } else if (state == CallState.RINGING) {
             pendingCaller = PhoneCallState.getOtherPhone();
             activeCall    = "";
         } else if (state == CallState.IDLE || state == CallState.IMPOSSIBLE) {
             if (!activeCall.isEmpty() || !pendingCaller.isEmpty()) {
-                // L'appel vient de se terminer
                 pendingCaller = "";
                 activeCall    = "";
             }
@@ -138,18 +147,18 @@ public class PhoneFixScreen extends Screen {
         int y = (height - H) / 2;
 
         // Fond
-        fill(ms, x, y, x + W, y + H, 0xFF1A1A2E);
-        fill(ms, x + 1, y + 1, x + W - 1, y + H - 1, 0xFF16213E);
+        PhoneRenderHelper.drawTexture(ms, TEX_BG_OUTER, x, y, W, H);
+        PhoneRenderHelper.drawTexture(ms, TEX_BG_INNER, x + 1, y + 1, W - 2, H - 2);
 
         // Bordure haut
-        fill(ms, x, y, x + W, y + 22, 0xFF0F3460);
+        PhoneRenderHelper.drawTexture(ms, TEX_HEADER, x, y, W, 22);
 
         // Titre
-        font.draw(ms, "Boitier Telephonique", x + 8, y + 7, 0xFF_A0C4FF);
-        font.draw(ms, "N : " + fixPhone, x + 8, y + 26, 0xFF_AAAAAA);
+        PhoneFont.draw(ms, "Boitier Telephonique", x + 8, y + 7, 0xFF_A0C4FF);
+        PhoneFont.draw(ms, "N : " + fixPhone, x + 8, y + 26, 0xFF_AAAAAA);
 
         // Separateur
-        fill(ms, x + 6, y + 38, x + W - 6, y + 39, 0xFF_334455);
+        PhoneRenderHelper.drawTexture(ms, TEX_SEPARATOR, x + 6, y + 38, W - 12, 1);
 
         CallState state = PhoneCallState.getState();
 
@@ -172,43 +181,43 @@ public class PhoneFixScreen extends Screen {
         // Affichage des chiffres composes
         String display = dialInput.toString();
         if (display.isEmpty()) display = "_";
-        int tw = font.width(display);
-        font.draw(ms, display, x + (W - tw) / 2f, y + 46, 0xFF_FFFFFF);
+        int tw = PhoneFont.width(display);
+        PhoneFont.draw(ms, display, x + (W - tw) / 2f, y + 46, 0xFF_FFFFFF);
     }
 
     private void drawRingingState(MatrixStack ms, int x, int y) {
         String caller = pendingCaller.isEmpty() ? PhoneCallState.getOtherPhone() : pendingCaller;
-        font.draw(ms, "Appel entrant :", x + 16, y + 46, 0xFF_AAAAAA);
-        int tw = font.width(caller);
-        font.draw(ms, caller, x + (W - tw) / 2f, y + 58, 0xFF_FFFFFF);
+        PhoneFont.draw(ms, "Appel entrant :", x + 16, y + 46, 0xFF_AAAAAA);
+        int tw = PhoneFont.width(caller);
+        PhoneFont.draw(ms, caller, x + (W - tw) / 2f, y + 58, 0xFF_FFFFFF);
     }
 
     private void drawCallingState(MatrixStack ms, int x, int y) {
         String target = activeCall.isEmpty() ? dialInput.toString() : activeCall;
-        font.draw(ms, "Appel en cours...", x + 16, y + 46, 0xFF_AAAAAA);
-        int tw = font.width(target);
-        font.draw(ms, target, x + (W - tw) / 2f, y + 58, 0xFF_FFFFFF);
+        PhoneFont.draw(ms, "Appel en cours...", x + 16, y + 46, 0xFF_AAAAAA);
+        int tw = PhoneFont.width(target);
+        PhoneFont.draw(ms, target, x + (W - tw) / 2f, y + 58, 0xFF_FFFFFF);
     }
 
     private void drawInCallState(MatrixStack ms, int x, int y) {
         String partner = PhoneCallState.getOtherPhone();
-        font.draw(ms, "En communication :", x + 16, y + 46, 0xFF_AAAAAA);
-        int tw = font.width(partner);
-        font.draw(ms, partner, x + (W - tw) / 2f, y + 58, 0xFF_00FF88);
+        PhoneFont.draw(ms, "En communication :", x + 16, y + 46, 0xFF_AAAAAA);
+        int tw = PhoneFont.width(partner);
+        PhoneFont.draw(ms, partner, x + (W - tw) / 2f, y + 58, 0xFF_00FF88);
 
         // Duree de l'appel
         if (minecraft != null && minecraft.player != null) {
             long elapsed = (minecraft.player.level.getGameTime() - PhoneCallState.getCallStartTick()) / 20;
             String dur = String.format("%02d:%02d", elapsed / 60, elapsed % 60);
-            int dw = font.width(dur);
-            font.draw(ms, dur, x + (W - dw) / 2f, y + 70, 0xFF_888888);
+            int dw = PhoneFont.width(dur);
+            PhoneFont.draw(ms, dur, x + (W - dw) / 2f, y + 70, 0xFF_888888);
         }
     }
 
     private void drawImpossibleState(MatrixStack ms, int x, int y) {
         String msg = "Numero indisponible";
-        int tw = font.width(msg);
-        font.draw(ms, msg, x + (W - tw) / 2f, y + 52, 0xFF_FF4444);
+        int tw = PhoneFont.width(msg);
+        PhoneFont.draw(ms, msg, x + (W - tw) / 2f, y + 52, 0xFF_FF4444);
     }
 
     // -------------------------------------------------------------------------
@@ -235,12 +244,13 @@ public class PhoneFixScreen extends Screen {
     // -------------------------------------------------------------------------
 
     private void startCall() {
-        String target = dialInput.toString().replaceAll("[^0-9]", "");
-        if (target.length() < 2) return;
-        PhoneCallState.setCalling(target, target);
-        activeCall = target;
+        String rawDigits = dialInput.toString().replaceAll("[^0-9]", "");
+        if (rawDigits.length() < 2) return;
+        String formattedTarget = formatPhoneNumber(rawDigits);
+        PhoneCallState.setCalling(formattedTarget, formattedTarget);
+        activeCall = formattedTarget;
         PacketHandler.CHANNEL.sendToServer(
-                new PacketCallSignalFix(CallSignal.CALL, fixPhone, target, blockPos));
+                new PacketCallSignalFix(CallSignal.CALL, fixPhone, formattedTarget, blockPos));
     }
 
     private void acceptCall() {
@@ -252,15 +262,31 @@ public class PhoneFixScreen extends Screen {
 
     private void declineCall() {
         String caller = pendingCaller.isEmpty() ? PhoneCallState.getOtherPhone() : pendingCaller;
+        PhoneClientHandler.stopRingSound();
         PhoneCallState.reset();
         PacketHandler.CHANNEL.sendToServer(
                 new PacketCallSignalFix(CallSignal.DECLINE, fixPhone, caller, blockPos));
+        if (minecraft != null && minecraft.player != null)
+            minecraft.player.playSound(ModSounds.PHONE_HANGUP.get(), 0.8f, 1.0f);
     }
 
     private void hangup() {
+        PhoneClientHandler.stopRingSound();
         PhoneCallState.reset();
         PacketHandler.CHANNEL.sendToServer(
                 new PacketCallSignalFix(CallSignal.HANGUP, fixPhone, "", blockPos));
+        if (minecraft != null && minecraft.player != null)
+            minecraft.player.playSound(ModSounds.PHONE_HANGUP.get(), 0.8f, 1.0f);
+    }
+
+    /** Formate les chiffres en groupes de 2 ("0612345678" → "06 12 34 56 78"). */
+    private static String formatPhoneNumber(String digits) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < digits.length(); i++) {
+            if (i > 0 && i % 2 == 0) sb.append(' ');
+            sb.append(digits.charAt(i));
+        }
+        return sb.toString();
     }
 
     // -------------------------------------------------------------------------

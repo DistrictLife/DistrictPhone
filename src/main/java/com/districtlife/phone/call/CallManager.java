@@ -39,11 +39,11 @@ public final class CallManager {
     // -------------------------------------------------------------------------
 
     public static void registerFix(String phone, PhoneFixTileEntity te) {
-        phoneFixRegistry.put(phone, te);
+        phoneFixRegistry.put(digitsOnly(phone), te);
     }
 
     public static void unregisterFix(String phone) {
-        phoneFixRegistry.remove(phone);
+        phoneFixRegistry.remove(digitsOnly(phone));
     }
 
     // -------------------------------------------------------------------------
@@ -70,7 +70,7 @@ public final class CallManager {
         }
 
         // Cible = boitier telephonique
-        PhoneFixTileEntity calleeFix = phoneFixRegistry.get(calleePhone);
+        PhoneFixTileEntity calleeFix = getFixTE(calleePhone);
         if (calleeFix != null && calleeFix.isIdle()) {
             pending.put(callerPhone, calleePhone);
             calleeFix.setRinging(callerPhone);
@@ -89,38 +89,59 @@ public final class CallManager {
                                    ServerPlayerEntity callee, MinecraftServer server) {
         String expected = pending.get(callerPhone);
         if (!calleePhone.equals(expected)) return;
-
-        ServerPlayerEntity caller = findPlayerByPhone(server, callerPhone);
         pending.remove(callerPhone);
-        if (caller == null) return;
 
         active.put(callerPhone, calleePhone);
         active.put(calleePhone, callerPhone);
 
         long now = callee.level.getGameTime();
-        PacketHandler.sendToPlayer(
-                new PacketCallUpdate(PacketCallUpdate.Signal.ACCEPTED, calleePhone, now), caller);
+        // Notifie le joueur qui repond (toujours un joueur avec telephone portable)
         PacketHandler.sendToPlayer(
                 new PacketCallUpdate(PacketCallUpdate.Signal.ACCEPTED, callerPhone, now), callee);
 
-        // --- SVC : creer un groupe vocal prive pour l'appel ---
-        if (SVCPlugin.isAvailable()) {
-            try {
-                // Mot de passe aleatoire pour que personne d'autre ne puisse rejoindre
-                Group group = SVCPlugin.SERVER_API.createGroup(
-                        "call_" + callerPhone,
-                        UUID.randomUUID().toString());
-                callGroups.put(callerPhone, group);
+        ServerPlayerEntity caller = findPlayerByPhone(server, callerPhone);
+        if (caller != null) {
+            // Appelant = joueur avec telephone portable
+            PacketHandler.sendToPlayer(
+                    new PacketCallUpdate(PacketCallUpdate.Signal.ACCEPTED, calleePhone, now), caller);
 
-                VoicechatConnection connCaller =
-                        SVCPlugin.SERVER_API.getConnectionOf(caller.getUUID());
-                VoicechatConnection connCallee =
-                        SVCPlugin.SERVER_API.getConnectionOf(callee.getUUID());
+            if (SVCPlugin.isAvailable()) {
+                try {
+                    Group group = SVCPlugin.SERVER_API.createGroup(
+                            "call_" + callerPhone, UUID.randomUUID().toString());
+                    callGroups.put(callerPhone, group);
+                    VoicechatConnection connCaller =
+                            SVCPlugin.SERVER_API.getConnectionOf(caller.getUUID());
+                    VoicechatConnection connCallee =
+                            SVCPlugin.SERVER_API.getConnectionOf(callee.getUUID());
+                    if (connCaller != null) connCaller.setGroup(group);
+                    if (connCallee != null) connCallee.setGroup(group);
+                } catch (Exception e) {}
+            }
+        } else {
+            // Appelant = boitier telephonique (fix→phone)
+            PhoneFixTileEntity callerFix = getFixTE(callerPhone);
+            UUID interactorUUID = callerFix != null ? callerFix.getInteractingPlayer() : null;
+            if (callerFix != null) callerFix.setInCall(calleePhone, interactorUUID);
 
-                if (connCaller != null) connCaller.setGroup(group);
-                if (connCallee != null) connCallee.setGroup(group);
-            } catch (Exception e) {
-                // SVC disponible mais erreur inattendue — l'appel continue sans voix groupee
+            notifyFixInteractor(callerPhone, server,
+                    new PacketCallUpdate(PacketCallUpdate.Signal.ACCEPTED, calleePhone, now));
+
+            if (SVCPlugin.isAvailable() && interactorUUID != null) {
+                try {
+                    ServerPlayerEntity interactor = server.getPlayerList().getPlayer(interactorUUID);
+                    if (interactor != null) {
+                        Group group = SVCPlugin.SERVER_API.createGroup(
+                                "call_" + callerPhone, UUID.randomUUID().toString());
+                        callGroups.put(callerPhone, group);
+                        VoicechatConnection connI =
+                                SVCPlugin.SERVER_API.getConnectionOf(interactorUUID);
+                        VoicechatConnection connC =
+                                SVCPlugin.SERVER_API.getConnectionOf(callee.getUUID());
+                        if (connI != null) connI.setGroup(group);
+                        if (connC != null) connC.setGroup(group);
+                    }
+                } catch (Exception e) {}
             }
         }
     }
@@ -139,6 +160,12 @@ public final class CallManager {
         if (caller != null) {
             PacketHandler.sendToPlayer(
                     new PacketCallUpdate(PacketCallUpdate.Signal.DECLINED, calleePhone, 0), caller);
+        } else {
+            // Appelant = boitier telephonique
+            notifyFixInteractor(callerPhone, server,
+                    new PacketCallUpdate(PacketCallUpdate.Signal.DECLINED, calleePhone, 0));
+            PhoneFixTileEntity callerFix = getFixTE(callerPhone);
+            if (callerFix != null) callerFix.resetCallState();
         }
     }
 
@@ -153,9 +180,12 @@ public final class CallManager {
         if (partner != null) {
             active.remove(partner);
 
-            // Retrouve les UUIDs pour SVC avant de nettoyer
+            // Recupere avant tout reset (les interacteurs peuvent etre nullifies apres)
             ServerPlayerEntity mePlayer      = findPlayerByPhone(server, myPhone);
             ServerPlayerEntity partnerPlayer = findPlayerByPhone(server, partner);
+            // Pour SVC : si le partenaire est un boitier, son interacteur est le vrai participant
+            ServerPlayerEntity partnerSVC = partnerPlayer != null
+                    ? partnerPlayer : getFixInteractor(server, partner);
 
             // Notifie le partenaire (joueur ou boitier)
             if (partnerPlayer != null) {
@@ -164,12 +194,11 @@ public final class CallManager {
             } else {
                 notifyFixInteractor(partner, server,
                         new PacketCallUpdate(PacketCallUpdate.Signal.ENDED, myPhone, 0));
-                PhoneFixTileEntity partnerFix = phoneFixRegistry.get(partner);
+                PhoneFixTileEntity partnerFix = getFixTE(partner);
                 if (partnerFix != null) partnerFix.resetCallState();
             }
 
-            // SVC : retire les deux joueurs du groupe vocal et supprime le groupe
-            disconnectSVC(myPhone, partner, mePlayer, partnerPlayer);
+            disconnectSVC(myPhone, partner, mePlayer, partnerSVC);
             return;
         }
 
@@ -180,6 +209,10 @@ public final class CallManager {
             if (calleePlayer != null) {
                 PacketHandler.sendToPlayer(
                         new PacketCallUpdate(PacketCallUpdate.Signal.ENDED, myPhone, 0), calleePlayer);
+            } else {
+                // Callee = boitier telephonique
+                PhoneFixTileEntity calleeFix = getFixTE(pendingCallee);
+                if (calleeFix != null) calleeFix.resetCallState();
             }
             return;
         }
@@ -195,6 +228,12 @@ public final class CallManager {
                     PacketHandler.sendToPlayer(
                             new PacketCallUpdate(PacketCallUpdate.Signal.DECLINED, myPhone, 0),
                             callerPlayer);
+                } else {
+                    // Caller = boitier telephonique
+                    notifyFixInteractor(e.getKey(), server,
+                            new PacketCallUpdate(PacketCallUpdate.Signal.DECLINED, myPhone, 0));
+                    PhoneFixTileEntity callerFix = getFixTE(e.getKey());
+                    if (callerFix != null) callerFix.resetCallState();
                 }
                 break;
             }
@@ -232,7 +271,7 @@ public final class CallManager {
         }
 
         // Cible = boitier telephonique
-        PhoneFixTileEntity calleeFix = phoneFixRegistry.get(calleePhone);
+        PhoneFixTileEntity calleeFix = getFixTE(calleePhone);
         if (calleeFix != null && calleeFix.isIdle()) {
             pending.put(callerPhone, calleePhone);
             calleeFix.setRinging(callerPhone);
@@ -251,7 +290,7 @@ public final class CallManager {
         if (!fixPhone.equals(expected)) return;
         pending.remove(callerPhone);
 
-        PhoneFixTileEntity fixTE = phoneFixRegistry.get(fixPhone);
+        PhoneFixTileEntity fixTE = getFixTE(fixPhone);
         if (fixTE != null) fixTE.setInCall(callerPhone, interactor.getUUID());
 
         active.put(callerPhone, fixPhone);
@@ -272,6 +311,33 @@ public final class CallManager {
         // Notifie le joueur qui a decroché le boitier
         PacketHandler.sendToPlayer(
                 new PacketCallUpdate(PacketCallUpdate.Signal.ACCEPTED, callerPhone, now), interactor);
+
+        // SVC : groupe vocal entre l'interacteur du boitier et l'appelant
+        if (SVCPlugin.isAvailable()) {
+            try {
+                Group group = SVCPlugin.SERVER_API.createGroup(
+                        "call_" + callerPhone, UUID.randomUUID().toString());
+                callGroups.put(callerPhone, group);
+
+                VoicechatConnection connInteractor =
+                        SVCPlugin.SERVER_API.getConnectionOf(interactor.getUUID());
+                if (connInteractor != null) connInteractor.setGroup(group);
+
+                if (callerPlayer != null) {
+                    VoicechatConnection connCaller =
+                            SVCPlugin.SERVER_API.getConnectionOf(callerPlayer.getUUID());
+                    if (connCaller != null) connCaller.setGroup(group);
+                } else {
+                    // Caller = boitier telephonique (fix→fix) : connecte son interacteur
+                    ServerPlayerEntity callerInteractor = getFixInteractor(server, callerPhone);
+                    if (callerInteractor != null) {
+                        VoicechatConnection connCI =
+                                SVCPlugin.SERVER_API.getConnectionOf(callerInteractor.getUUID());
+                        if (connCI != null) connCI.setGroup(group);
+                    }
+                }
+            } catch (Exception e) {}
+        }
     }
 
     /** Refus d'un appel entrant sur un boitier. */
@@ -281,7 +347,7 @@ public final class CallManager {
         if (!fixPhone.equals(expected)) return;
         pending.remove(callerPhone);
 
-        PhoneFixTileEntity fixTE = phoneFixRegistry.get(fixPhone);
+        PhoneFixTileEntity fixTE = getFixTE(fixPhone);
         if (fixTE != null) fixTE.resetCallState();
 
         ServerPlayerEntity callerPlayer = findPlayerByPhone(server, callerPhone);
@@ -296,26 +362,34 @@ public final class CallManager {
 
     /** Raccrocher depuis un boitier (appel actif ou sonnerie). */
     public static void hangupFix(String fixPhone, MinecraftServer server) {
-        PhoneFixTileEntity fixTE = phoneFixRegistry.get(fixPhone);
+        PhoneFixTileEntity fixTE = getFixTE(fixPhone);
 
         // Cas 1 : appel actif
         String partner = active.remove(fixPhone);
         if (partner != null) {
             active.remove(partner);
+
+            // Recupere les interacteurs avant tout reset
+            ServerPlayerEntity fixInteractor = getFixInteractor(server, fixPhone);
+            ServerPlayerEntity partnerPlayer = findPlayerByPhone(server, partner);
+            ServerPlayerEntity partnerSVC    = partnerPlayer != null
+                    ? partnerPlayer : getFixInteractor(server, partner);
+
             if (fixTE != null) fixTE.resetCallState();
 
-            ServerPlayerEntity partnerPlayer = findPlayerByPhone(server, partner);
             if (partnerPlayer != null) {
                 PacketHandler.sendToPlayer(
                         new PacketCallUpdate(PacketCallUpdate.Signal.ENDED, fixPhone, 0), partnerPlayer);
             } else {
-                PhoneFixTileEntity partnerFix = phoneFixRegistry.get(partner);
+                PhoneFixTileEntity partnerFix = getFixTE(partner);
                 if (partnerFix != null) {
                     notifyFixInteractor(partner, server,
                             new PacketCallUpdate(PacketCallUpdate.Signal.ENDED, fixPhone, 0));
                     partnerFix.resetCallState();
                 }
             }
+
+            disconnectSVC(fixPhone, partner, fixInteractor, partnerSVC);
             return;
         }
 
@@ -328,7 +402,7 @@ public final class CallManager {
                 PacketHandler.sendToPlayer(
                         new PacketCallUpdate(PacketCallUpdate.Signal.ENDED, fixPhone, 0), calleePlayer);
             } else {
-                PhoneFixTileEntity calleeFix = phoneFixRegistry.get(pendingCallee);
+                PhoneFixTileEntity calleeFix = getFixTE(pendingCallee);
                 if (calleeFix != null) calleeFix.resetCallState();
             }
             return;
@@ -353,7 +427,7 @@ public final class CallManager {
 
     /** Envoie un paquet au joueur interagissant avec un boitier (s'il existe). */
     private static void notifyFixInteractor(String fixPhone, MinecraftServer server, Object packet) {
-        PhoneFixTileEntity fix = phoneFixRegistry.get(fixPhone);
+        PhoneFixTileEntity fix = getFixTE(fixPhone);
         if (fix == null) return;
         UUID uuid = fix.getInteractingPlayer();
         if (uuid == null) return;
@@ -403,5 +477,23 @@ public final class CallManager {
             if (!PhoneItem.findPhoneStack(p, phone).isEmpty()) return p;
         }
         return null;
+    }
+
+    /** Retourne le joueur interagissant avec un boitier, ou null. */
+    private static ServerPlayerEntity getFixInteractor(MinecraftServer server, String fixPhone) {
+        PhoneFixTileEntity fix = getFixTE(fixPhone);
+        if (fix == null) return null;
+        UUID uuid = fix.getInteractingPlayer();
+        return uuid != null ? server.getPlayerList().getPlayer(uuid) : null;
+    }
+
+    /** Supprime tous les caracteres non numeriques ("06 12 34 56 78" → "0612345678"). */
+    private static String digitsOnly(String phone) {
+        return phone == null ? "" : phone.replaceAll("[^0-9]", "");
+    }
+
+    /** Retourne la TileEntity boitier associee a un numero (normalise), ou null. */
+    private static PhoneFixTileEntity getFixTE(String phone) {
+        return phoneFixRegistry.get(digitsOnly(phone));
     }
 }

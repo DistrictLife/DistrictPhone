@@ -9,6 +9,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import com.districtlife.phone.util.PhoneFont;
 
 /**
  * App Parametres.
@@ -54,10 +55,10 @@ public class AppSettings extends AbstractPhoneApp {
 
         stack.pushPose();
         float scale = 1.3F;
-        float nw = getFont().width(display) * scale;
+        float nw = PhoneFont.width(display) * scale;
         stack.translate(phoneX + (phoneWidth - nw) / 2.0F, y, 0);
         stack.scale(scale, scale, 1.0F);
-        getFont().draw(stack, display, 0, 0, 0xFFFFFFFF);
+        PhoneFont.draw(stack, display, 0, 0, 0xFFFFFFFF);
         stack.popPose();
 
         y += (int) (9 * scale) + PADDING + 4;
@@ -97,16 +98,16 @@ public class AppSettings extends AbstractPhoneApp {
 
             // Bullet colore : vert = visible, gris = masque
             int bulletColor = hidden ? 0xFF666666 : 0xFF44BB44;
-            getFont().draw(stack, "\u25CF", phoneX + PADDING, rowY + 4, bulletColor);
+            PhoneFont.draw(stack, "\u25CF", phoneX + PADDING, rowY + 4, bulletColor);
 
             // Nom de l'app
-            getFont().draw(stack, label, phoneX + PADDING + 10, rowY + 4, 0xFFDDDDDD);
+            PhoneFont.draw(stack, label, phoneX + PADDING + 10, rowY + 4, 0xFFDDDDDD);
 
             // Badge MASQUE ou (rien si visible)
             if (hidden) {
                 String badge = "MASQUE";
-                int bw = getFont().width(badge);
-                getFont().draw(stack, badge,
+                int bw = PhoneFont.width(badge);
+                PhoneFont.draw(stack, badge,
                         phoneX + phoneWidth - bw - PADDING,
                         rowY + 4,
                         0xFF888888);
@@ -177,8 +178,8 @@ public class AppSettings extends AbstractPhoneApp {
     // -------------------------------------------------------------------------
 
     private int renderSectionHeader(MatrixStack stack, String title, int y) {
-        int tw = getFont().width(title);
-        getFont().draw(stack, title,
+        int tw = PhoneFont.width(title);
+        PhoneFont.draw(stack, title,
                 phoneX + (phoneWidth - tw) / 2.0F, y, 0xFF888888);
         y += 10;
         PhoneRenderHelper.fillRect(stack, phoneX + 6, y, phoneWidth - 12, 1, 0xFF333355);

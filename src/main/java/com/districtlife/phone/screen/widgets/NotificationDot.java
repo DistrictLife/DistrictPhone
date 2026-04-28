@@ -2,6 +2,7 @@ package com.districtlife.phone.screen.widgets;
 
 import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -12,7 +13,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class NotificationDot {
 
     private static final int DOT_SIZE = 6;
-    private static final int COLOR_RED = 0xFFFF3333;
+    private static final ResourceLocation TEX_NOTIF_DOT =
+            new ResourceLocation("districtlife_phone", "textures/gui/phone/notif_dot.png");
 
     private final int x;
     private final int y;
@@ -31,6 +33,6 @@ public class NotificationDot {
 
     public void render(MatrixStack stack) {
         if (!visible) return;
-        PhoneRenderHelper.fillRect(stack, x, y, DOT_SIZE, DOT_SIZE, COLOR_RED);
+        PhoneRenderHelper.drawTexture(stack, TEX_NOTIF_DOT, x, y, DOT_SIZE, DOT_SIZE);
     }
 }

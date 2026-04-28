@@ -57,10 +57,10 @@ public class RPTime {
     }
 
     /**
-     * Retourne la date RP formatee : "Lundi 14 Avril - An 1"
+     * Retourne la date RP formatee : "Lundi 14 janvier 2028"
      */
     public String getFormattedDate() {
-        return getDayName() + " " + getDayOfMonth() + " " + getMonthName() + " - An " + getYear();
+        return getDayName() + " " + getDayOfMonth() + " " + getMonthName().toLowerCase() + " " + getYear();
     }
 
     public int getHours() { return hours; }

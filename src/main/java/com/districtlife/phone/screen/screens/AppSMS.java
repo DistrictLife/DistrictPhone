@@ -19,6 +19,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import com.districtlife.phone.util.PhoneFont;
 
 @OnlyIn(Dist.CLIENT)
 public class AppSMS extends AbstractPhoneApp {
@@ -101,8 +102,8 @@ public class AppSMS extends AbstractPhoneApp {
 
         if (convs.isEmpty()) {
             String msg = "Aucun message";
-            int mw = getFont().width(msg);
-            getFont().draw(stack, msg,
+            int mw = PhoneFont.width(msg);
+            PhoneFont.draw(stack, msg,
                     phoneX + (phoneWidth - mw) / 2.0F,
                     phoneY + phoneHeight / 2.0F - 4,
                     0xFF555566);
@@ -126,14 +127,14 @@ public class AppSMS extends AbstractPhoneApp {
 
                 // Nom du contact (ou numero)
                 String displayName = resolveDisplayName(conv.getContactPhoneNumber());
-                getFont().draw(stack, displayName, phoneX + 10, itemY + 3, 0xFFEEEEEE);
+                PhoneFont.draw(stack, displayName, phoneX + 10, itemY + 3, 0xFFEEEEEE);
 
                 // Apercu dernier message
                 Conversation.Message last = conv.getLastMessage();
                 if (last != null) {
                     String preview = (last.isOutgoing() ? "Vous: " : "") + last.getText();
-                    if (getFont().width(preview) > phoneWidth - 14) {
-                        while (getFont().width(preview + "...") > phoneWidth - 14 && preview.length() > 0) {
+                    if (PhoneFont.width(preview) > phoneWidth - 14) {
+                        while (PhoneFont.width(preview + "...") > phoneWidth - 14 && preview.length() > 0) {
                             preview = preview.substring(0, preview.length() - 1);
                         }
                         preview += "...";
@@ -141,19 +142,19 @@ public class AppSMS extends AbstractPhoneApp {
                     stack.pushPose();
                     stack.translate(phoneX + 10, itemY + 14, 0);
                     stack.scale(0.75F, 0.75F, 1F);
-                    getFont().draw(stack, preview, 0, 0, 0xFF777799);
+                    PhoneFont.draw(stack, preview, 0, 0, 0xFF777799);
                     stack.popPose();
                 }
 
                 // Chevron
-                getFont().draw(stack, ">", phoneX + phoneWidth - 10, itemY + 10, 0xFF444466);
+                PhoneFont.draw(stack, ">", phoneX + phoneWidth - 10, itemY + 10, 0xFF444466);
             }
 
             // Indicateurs scroll
             if (listScroll > 0)
-                getFont().draw(stack, "^", phoneX + phoneWidth / 2 - 2, listTop, 0xFF555577);
+                PhoneFont.draw(stack, "^", phoneX + phoneWidth / 2 - 2, listTop, 0xFF555577);
             if (listScroll + maxVisible < convs.size())
-                getFont().draw(stack, "v", phoneX + phoneWidth / 2 - 2,
+                PhoneFont.draw(stack, "v", phoneX + phoneWidth / 2 - 2,
                         listTop + maxVisible * CONV_ITEM_H, 0xFF555577);
         }
 
@@ -163,7 +164,7 @@ public class AppSMS extends AbstractPhoneApp {
         PhoneRenderHelper.fillRect(stack, phoneX + phoneWidth / 2 - 22, btnY, 44, 13,
                 btnHov ? 0xFF3355CC : 0xFF1A2E88);
         String lbl = "Nouveau";
-        getFont().draw(stack, lbl, phoneX + (phoneWidth - getFont().width(lbl)) / 2.0F, btnY + 3, 0xFFFFFFFF);
+        PhoneFont.draw(stack, lbl, phoneX + (phoneWidth - PhoneFont.width(lbl)) / 2.0F, btnY + 3, 0xFFFFFFFF);
     }
 
     // -------------------------------------------------------------------------
@@ -178,8 +179,8 @@ public class AppSMS extends AbstractPhoneApp {
 
         if (contacts.isEmpty()) {
             String msg = "Aucun contact enregistre";
-            int mw = getFont().width(msg);
-            getFont().draw(stack, msg,
+            int mw = PhoneFont.width(msg);
+            PhoneFont.draw(stack, msg,
                     phoneX + (phoneWidth - mw) / 2.0F,
                     phoneY + phoneHeight / 2.0F - 4,
                     0xFF555566);
@@ -197,13 +198,13 @@ public class AppSMS extends AbstractPhoneApp {
             PhoneRenderHelper.fillRect(stack, phoneX, itemY, phoneWidth, CONTACT_ITEM_H - 1,
                     hov ? 0x33FFFFFF : 0x11FFFFFF);
 
-            getFont().draw(stack, c.getPseudo(), phoneX + 8, itemY + 3, 0xFFEEEEEE);
+            PhoneFont.draw(stack, c.getPseudo(), phoneX + 8, itemY + 3, 0xFFEEEEEE);
 
             String num = c.getPhoneNumber().isEmpty() ? "Pas de numero" : c.getPhoneNumber();
             stack.pushPose();
             stack.translate(phoneX + 8, itemY + 13, 0);
             stack.scale(0.75F, 0.75F, 1F);
-            getFont().draw(stack, num, 0, 0, 0xFF777799);
+            PhoneFont.draw(stack, num, 0, 0, 0xFF777799);
             stack.popPose();
         }
     }
@@ -265,7 +266,7 @@ public class AppSMS extends AbstractPhoneApp {
         boolean sendHov = isIn(mouseX, mouseY, phoneX + phoneWidth - 18, inputY + 3, 14, 14);
         PhoneRenderHelper.fillRect(stack, phoneX + phoneWidth - 18, inputY + 3, 14, 14,
                 sendHov ? 0xFF3355CC : 0xFF1A2E88);
-        getFont().draw(stack, ">", phoneX + phoneWidth - 13, inputY + 6, 0xFFFFFFFF);
+        PhoneFont.draw(stack, ">", phoneX + phoneWidth - 13, inputY + 6, 0xFFFFFFFF);
     }
 
     private void renderBubble(MatrixStack stack, Bubble b, int y, int clipTop, int clipBot) {
@@ -284,7 +285,7 @@ public class AppSMS extends AbstractPhoneApp {
         int lineY = y + 3;
         for (String line : b.lines) {
             if (lineY >= clipTop && lineY < clipBot) {
-                getFont().draw(stack, line, bubbleX + 4, lineY, 0xFFFFFFFF);
+                PhoneFont.draw(stack, line, bubbleX + 4, lineY, 0xFFFFFFFF);
             }
             lineY += 9;
         }
@@ -484,7 +485,7 @@ public class AppSMS extends AbstractPhoneApp {
         for (Conversation.Message msg : messages) {
             List<String> lines = wrapText(msg.getText(), BUBBLE_MAX_W - 8);
             int maxW = 0;
-            for (String l : lines) maxW = Math.max(maxW, getFont().width(l));
+            for (String l : lines) maxW = Math.max(maxW, PhoneFont.width(l));
             result.add(new Bubble(lines, maxW, msg.isOutgoing(), 9));
         }
         return result;
@@ -496,7 +497,7 @@ public class AppSMS extends AbstractPhoneApp {
         StringBuilder cur = new StringBuilder();
         for (String word : words) {
             String test = cur.length() == 0 ? word : cur + " " + word;
-            if (getFont().width(test) <= maxPx) {
+            if (PhoneFont.width(test) <= maxPx) {
                 cur = new StringBuilder(test);
             } else {
                 if (cur.length() > 0) lines.add(cur.toString());

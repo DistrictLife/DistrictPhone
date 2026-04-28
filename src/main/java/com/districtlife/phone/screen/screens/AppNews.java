@@ -11,6 +11,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.districtlife.phone.util.PhoneFont;
 
 /**
  * App News — journal RP publie par les modos via /news publish.
@@ -81,8 +82,8 @@ public class AppNews extends AbstractPhoneApp {
 
         if (all.isEmpty()) {
             String msg = "Aucun article disponible";
-            getFont().draw(stack, msg,
-                    phoneX + (phoneWidth - getFont().width(msg)) / 2.0F,
+            PhoneFont.draw(stack, msg,
+                    phoneX + (phoneWidth - PhoneFont.width(msg)) / 2.0F,
                     contentY + contentH / 2.0F - 4,
                     0xFF666677);
             return;
@@ -103,7 +104,7 @@ public class AppNews extends AbstractPhoneApp {
 
             // Titre
             String title = truncate(a.title, phoneWidth - 10);
-            getFont().draw(stack, title, phoneX + 6, rowY + 4, 0xFFEEEEEE);
+            PhoneFont.draw(stack, title, phoneX + 6, rowY + 4, 0xFFEEEEEE);
 
             // Auteur + date (echelle 0.75)
             String dateLine = a.author + "  \u2022  " + formatDate(a.tickRP);
@@ -120,10 +121,10 @@ public class AppNews extends AbstractPhoneApp {
 
         // Indicateurs de scroll
         if (listScroll > 0) {
-            getFont().draw(stack, "\u2303", phoneX + phoneWidth / 2 - 3, contentY + 1, 0xFF555577);
+            PhoneFont.draw(stack, "\u2303", phoneX + phoneWidth / 2 - 3, contentY + 1, 0xFF555577);
         }
         if (listScroll + maxVis < all.size()) {
-            getFont().draw(stack, "\u2304", phoneX + phoneWidth / 2 - 3,
+            PhoneFont.draw(stack, "\u2304", phoneX + phoneWidth / 2 - 3,
                     contentY + maxVis * ROW_H + 1, 0xFF555577);
         }
     }
@@ -141,7 +142,7 @@ public class AppNews extends AbstractPhoneApp {
 
         // Titre de l'article (avec retour a la ligne si trop long)
         String title = selectedArticle.title;
-        getFont().draw(stack, truncate(title, phoneWidth - 10),
+        PhoneFont.draw(stack, truncate(title, phoneWidth - 10),
                 phoneX + 5, contentY + 4, 0xFFEEEEFF);
 
         // Auteur + date
@@ -167,12 +168,12 @@ public class AppNews extends AbstractPhoneApp {
 
             String line = wrappedLines.get(i);
             int lineY = textAreaY + rel * LINE_H + 3;
-            getFont().draw(stack, line, phoneX + 8, lineY, 0xFFCCCCDD);
+            PhoneFont.draw(stack, line, phoneX + 8, lineY, 0xFFCCCCDD);
         }
 
         // Indicateur de scroll bas
         if (articleScroll + maxVis < wrappedLines.size()) {
-            getFont().draw(stack, "\u2304",
+            PhoneFont.draw(stack, "\u2304",
                     phoneX + phoneWidth / 2 - 3,
                     textAreaY + textAreaH - 10, 0xFF555577);
         }
@@ -265,7 +266,7 @@ public class AppNews extends AbstractPhoneApp {
             }
             String remaining = paragraph;
             while (!remaining.isEmpty()) {
-                if (getFont().width(remaining) <= maxWidth) {
+                if (PhoneFont.width(remaining) <= maxWidth) {
                     result.add(remaining);
                     break;
                 }
@@ -273,7 +274,7 @@ public class AppNews extends AbstractPhoneApp {
                 int cut = 0;
                 int lastSpace = -1;
                 for (int i = 1; i <= remaining.length(); i++) {
-                    if (getFont().width(remaining.substring(0, i)) > maxWidth) break;
+                    if (PhoneFont.width(remaining.substring(0, i)) > maxWidth) break;
                     cut = i;
                     if (remaining.charAt(i - 1) == ' ') lastSpace = i - 1;
                 }
@@ -292,11 +293,11 @@ public class AppNews extends AbstractPhoneApp {
 
     /** Tronque un texte si son rendu depasse maxWidth pixels, ajoute "...". */
     private String truncate(String text, int maxWidth) {
-        if (getFont().width(text) <= maxWidth) return text;
+        if (PhoneFont.width(text) <= maxWidth) return text;
         String ellipsis = "...";
-        int ellipsisW = getFont().width(ellipsis);
+        int ellipsisW = PhoneFont.width(ellipsis);
         int i = text.length();
-        while (i > 0 && getFont().width(text.substring(0, i)) + ellipsisW > maxWidth) i--;
+        while (i > 0 && PhoneFont.width(text.substring(0, i)) + ellipsisW > maxWidth) i--;
         return text.substring(0, i) + ellipsis;
     }
 
@@ -304,7 +305,7 @@ public class AppNews extends AbstractPhoneApp {
         stack.pushPose();
         stack.translate(x, y, 0);
         stack.scale(0.75F, 0.75F, 1F);
-        getFont().draw(stack, text, 0, 0, color);
+        PhoneFont.draw(stack, text, 0, 0, color);
         stack.popPose();
     }
 

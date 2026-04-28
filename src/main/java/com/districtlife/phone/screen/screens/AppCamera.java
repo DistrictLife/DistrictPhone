@@ -8,6 +8,7 @@ import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import com.districtlife.phone.util.PhoneFont;
 
 /**
  * App Appareil Photo.
@@ -54,8 +55,8 @@ public class AppCamera extends AbstractPhoneApp {
         // --- Etat de la capture en cours (fallback sans Camera Mod) ---
         if (!CameraModBridge.isLoaded() && CameraHelper.isPending()) {
             String waiting = "Capture...";
-            int ww = getFont().width(waiting);
-            getFont().draw(stack, waiting,
+            int ww = PhoneFont.width(waiting);
+            PhoneFont.draw(stack, waiting,
                     phoneX + (phoneWidth - ww) / 2.0F,
                     cy - 4,
                     0xFFFFCC00);

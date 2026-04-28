@@ -7,6 +7,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -58,25 +59,33 @@ public class PacketSendSMS {
                     new PacketSyncPhone(packet.senderPhoneNumber, PhoneData.getRaw(senderStack)),
                     sender);
 
-            // Livre le message au destinataire s'il est connecte
+            // Tente la livraison en ligne au destinataire
+            boolean deliveredOnline = false;
             MinecraftServer server = sender.getServer();
-            if (server == null) return;
-            ServerPlayerEntity target = findPlayerHoldingPhone(server, packet.targetPhoneNumber);
-            if (target == null) return;
+            if (server != null) {
+                ServerPlayerEntity target = findPlayerHoldingPhone(server, packet.targetPhoneNumber);
+                if (target != null) {
+                    ItemStack targetStack = PhoneItem.findPhoneStack(target, packet.targetPhoneNumber);
+                    if (!targetStack.isEmpty()) {
+                        Conversation targetConv = PhoneData.getOrCreateConversation(targetStack, packet.senderPhoneNumber);
+                        targetConv.addMessage(new Conversation.Message(text, false, timestamp));
+                        PhoneData.saveConversation(targetStack, targetConv);
+                        PhoneData.setHasUnreadSMS(targetStack, true);
 
-            ItemStack targetStack = PhoneItem.findPhoneStack(target, packet.targetPhoneNumber);
-            if (targetStack.isEmpty()) return;
+                        target.inventory.setChanged();
+                        PacketHandler.sendToPlayer(
+                                new PacketSyncPhone(packet.targetPhoneNumber, PhoneData.getRaw(targetStack)),
+                                target);
+                        PacketHandler.sendToPlayer(new PacketSmsNotify(), target);
+                        deliveredOnline = true;
+                    }
+                }
+            }
 
-            Conversation targetConv = PhoneData.getOrCreateConversation(targetStack, packet.senderPhoneNumber);
-            targetConv.addMessage(new Conversation.Message(text, false, timestamp));
-            PhoneData.saveConversation(targetStack, targetConv);
-            PhoneData.setHasUnreadSMS(targetStack, true);
-
-            target.inventory.setChanged();
-            PacketHandler.sendToPlayer(
-                    new PacketSyncPhone(packet.targetPhoneNumber, PhoneData.getRaw(targetStack)),
-                    target);
-            PacketHandler.sendToPlayer(new PacketSmsNotify(), target);
+            // Notifie DLCitizens pour persistance (deliveredOnline=false → stockage hors ligne)
+            MinecraftForge.EVENT_BUS.post(new PhoneNetEvent.SmsSent(
+                    packet.senderPhoneNumber, packet.targetPhoneNumber,
+                    text, timestamp, deliveredOnline));
         });
         ctx.get().setPacketHandled(true);
     }

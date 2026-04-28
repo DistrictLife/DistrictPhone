@@ -17,30 +17,44 @@ import java.util.Deque;
 
 /**
  * Ecran principal du telephone.
- * Gere le rendu du cadre smartphone et la navigation entre les apps via un stack.
+ * Toutes les textures sont rendues a leurs dimensions exactes (pixels 1:1).
  *
- * Dimensions internes : 180 x 320 px (coordonnees GUI Minecraft).
+ * cadre_phone.png : 455x926
+ * background.png  : 424x900  (centree dans le cadre : marge 15px H, 13px V)
  */
 @OnlyIn(Dist.CLIENT)
 public class PhoneScreen extends Screen {
 
-    public static final int PHONE_WIDTH  = 180;
-    public static final int PHONE_HEIGHT = 320;
+    // Dimensions exactes du cadre PNG
+    public static final int PHONE_WIDTH  = 455;
+    public static final int PHONE_HEIGHT = 926;
 
-    private static final ResourceLocation PHONE_FRAME =
-            new ResourceLocation("districtlife_phone", "textures/gui/phone_frame.png");
-    private static final ResourceLocation WALLPAPER =
-            new ResourceLocation("districtlife_phone", "textures/gui/wallpaper_default.png");
+    // Dimensions exactes du background PNG
+    public static final int CONTENT_WIDTH  = 424;
+    public static final int CONTENT_HEIGHT = 900;
+
+    // Decalage du background dans le cadre
+    private static final int BG_OFFSET_X = (PHONE_WIDTH  - CONTENT_WIDTH)  / 2; // 15
+    private static final int BG_OFFSET_Y = (PHONE_HEIGHT - CONTENT_HEIGHT) / 2; // 13
+
+    private static final ResourceLocation BACKGROUND =
+            new ResourceLocation("districtlife_phone", "textures/gui/phone/background.png");
+    private static final ResourceLocation CADRE =
+            new ResourceLocation("districtlife_phone", "textures/gui/phone/cadre_phone.png");
 
     // Coordonnees de l'origine du cadre dans l'ecran GUI
     private int frameX;
     private int frameY;
 
-    // Zone interne (contenu, sans le cadre)
+    // Origine de la zone de contenu (= background)
     public int contentX;
     public int contentY;
-    public static final int CONTENT_WIDTH  = 160;
-    public static final int CONTENT_HEIGHT = 280;
+
+    // Dimensions rendues apres scaling dynamique
+    private int renderPhoneW;
+    private int renderPhoneH;
+    private int renderContentW;
+    private int renderContentH;
 
     /** Numero de telephone de cet item (lu depuis le NBT a l'ouverture). */
     private final String phoneNumber;
@@ -64,17 +78,27 @@ public class PhoneScreen extends Screen {
     protected void init() {
         super.init();
 
-        // Centrage du cadre
-        frameX = (width  - PHONE_WIDTH)  / 2;
-        frameY = (height - PHONE_HEIGHT) / 2;
+        // Scale dynamique : telephone remplit ~90% de la hauteur ecran
+        float scaleH = (height - 20f) / PHONE_HEIGHT;
+        float scaleW = (width  - 20f) / PHONE_WIDTH;
+        float scale  = Math.min(scaleH, scaleW);
 
-        // Zone de contenu interne (cadre avec 10px de marge)
-        contentX = frameX + 10;
-        contentY = frameY + 20;
+        renderPhoneW   = (int)(PHONE_WIDTH   * scale);
+        renderPhoneH   = (int)(PHONE_HEIGHT  * scale);
+        renderContentW = (int)(CONTENT_WIDTH * scale);
+        renderContentH = (int)(CONTENT_HEIGHT * scale);
+
+        int offsetX = (renderPhoneW - renderContentW) / 2;
+        int offsetY = (renderPhoneH - renderContentH) / 2;
+
+        frameX   = (width  - renderPhoneW) / 2;
+        frameY   = (height - renderPhoneH) / 2;
+        contentX = frameX + offsetX;
+        contentY = frameY + offsetY;
 
         // Demarre sur le lockscreen
         LockScreen lockScreen = new LockScreen();
-        lockScreen.init(this, contentX, contentY, CONTENT_WIDTH, CONTENT_HEIGHT);
+        lockScreen.init(this, contentX, contentY, renderContentW, renderContentH);
         currentApp = lockScreen;
         navStack.clear();
         navStack.push(lockScreen);
@@ -85,20 +109,20 @@ public class PhoneScreen extends Screen {
         // Fond obscurci
         PhoneRenderHelper.drawDimBackground(stack, width, height);
 
-        // Wallpaper (fond de l'ecran interne)
-        PhoneRenderHelper.drawTexture(stack, WALLPAPER,
-                contentX, contentY, CONTENT_WIDTH, CONTENT_HEIGHT);
+        // 1 - Background scale dynamiquement
+        PhoneRenderHelper.drawTexture(stack, BACKGROUND,
+                contentX, contentY, renderContentW, renderContentH);
 
-        // Cadre du smartphone par-dessus
-        PhoneRenderHelper.drawTexture(stack, PHONE_FRAME,
-                frameX, frameY, PHONE_WIDTH, PHONE_HEIGHT);
-
-        // Rendu de l'app courante
+        // 2 - Rendu de l'app courante (par-dessus le background)
         if (currentApp != null) {
             currentApp.render(stack, mouseX, mouseY, partialTick);
         }
 
         super.render(stack, mouseX, mouseY, partialTick);
+
+        // 3 - Cadre scale dynamiquement, par-dessus tout
+        PhoneRenderHelper.drawTexture(stack, CADRE,
+                frameX, frameY, renderPhoneW, renderPhoneH);
     }
 
     @Override
@@ -154,7 +178,7 @@ public class PhoneScreen extends Screen {
     // --- Navigation ---
 
     public void navigateTo(AbstractPhoneApp app) {
-        app.init(this, contentX, contentY, CONTENT_WIDTH, CONTENT_HEIGHT);
+        app.init(this, contentX, contentY, renderContentW, renderContentH);
         navStack.push(app);
         currentApp = app;
     }

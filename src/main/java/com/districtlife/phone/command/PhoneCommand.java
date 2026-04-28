@@ -339,14 +339,22 @@ public class PhoneCommand {
             return 0;
         }
 
+        // Formate comme PhoneItem.generatePhoneNumber() : "06 XX XX XX XX"
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < digits.length(); i++) {
+            if (i > 0 && i % 2 == 0) sb.append(' ');
+            sb.append(digits.charAt(i));
+        }
+        String formatted = sb.toString();
+
         ItemStack stack = new ItemStack(ModBlocks.PHONE_FIX_ITEM.get());
-        PhoneFixItem.setPhoneNumber(stack, numero);
+        PhoneFixItem.setPhoneNumber(stack, formatted);
 
         target.inventory.add(stack);
         source.sendSuccess(
-                new StringTextComponent("\u00A7aBoitier telephonique donne a \u00A7f"
+                new StringTextComponent("§aBoitier telephonique donne a §f"
                         + target.getDisplayName().getString()
-                        + "\u00A7a (numero : \u00A7f" + numero + "\u00A7a)."),
+                        + "§a (numero : §f" + formatted + "§a)."),
                 true);
         return 1;
     }

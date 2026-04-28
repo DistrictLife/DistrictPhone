@@ -16,6 +16,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.districtlife.phone.util.PhoneFont;
 
 @OnlyIn(Dist.CLIENT)
 public class AppContacts extends AbstractPhoneApp {
@@ -109,7 +110,7 @@ public class AppContacts extends AbstractPhoneApp {
         // Fond + barre de recherche
         PhoneRenderHelper.fillRect(stack, phoneX, phoneY + 16, phoneWidth, 16, 0xFF0D0D20);
         // Icone loupe
-        getFont().draw(stack, "?", phoneX + 4, phoneY + 19, 0xFF666688);
+        PhoneFont.draw(stack, "?", phoneX + 4, phoneY + 19, 0xFF666688);
         searchField.x = phoneX + 14;
         searchField.y = phoneY + 20;
         searchField.setWidth(phoneWidth - 18);
@@ -124,8 +125,8 @@ public class AppContacts extends AbstractPhoneApp {
 
         if (contacts.isEmpty()) {
             String msg = searchField.getValue().isEmpty() ? "Aucun contact" : "Aucun resultat";
-            int mw = getFont().width(msg);
-            getFont().draw(stack, msg,
+            int mw = PhoneFont.width(msg);
+            PhoneFont.draw(stack, msg,
                     phoneX + (phoneWidth - mw) / 2.0F,
                     phoneY + phoneHeight / 2.0F - 4,
                     0xFF555566);
@@ -142,14 +143,14 @@ public class AppContacts extends AbstractPhoneApp {
                 PhoneRenderHelper.fillRect(stack, phoneX, itemY, phoneWidth, ITEM_H - 1, bg);
 
                 // Pseudo
-                getFont().draw(stack, c.getPseudo(), phoneX + 6, itemY + 3, 0xFFEEEEEE);
+                PhoneFont.draw(stack, c.getPseudo(), phoneX + 6, itemY + 3, 0xFFEEEEEE);
 
                 // Numero (echelle 0.75)
                 String num = c.getPhoneNumber().isEmpty() ? "Pas de numero" : c.getPhoneNumber();
                 stack.pushPose();
                 stack.translate(phoneX + 6, itemY + 14, 0);
                 stack.scale(0.75F, 0.75F, 1.0F);
-                getFont().draw(stack, num, 0, 0, 0xFF777799);
+                PhoneFont.draw(stack, num, 0, 0, 0xFF777799);
                 stack.popPose();
 
                 // Boutons d'action — uniquement si le contact a un numero
@@ -161,21 +162,21 @@ public class AppContacts extends AbstractPhoneApp {
                     boolean smsHov = isInBounds(mouseX, mouseY, smsX, btnY, 12, 12);
                     PhoneRenderHelper.fillRect(stack, smsX, btnY, 12, 12,
                             smsHov ? 0xFF3355CC : 0xFF112266);
-                    getFont().draw(stack, "\u2709", smsX + 2, btnY + 2, 0xFFFFFFFF);
+                    PhoneFont.draw(stack, "\u2709", smsX + 2, btnY + 2, 0xFFFFFFFF);
 
                     // Bouton appeler (vert)
                     int callX = phoneX + phoneWidth - 28;
                     boolean callHov = isInBounds(mouseX, mouseY, callX, btnY, 12, 12);
                     PhoneRenderHelper.fillRect(stack, callX, btnY, 12, 12,
                             callHov ? 0xFF33CC55 : 0xFF116633);
-                    getFont().draw(stack, "\u260F", callX + 2, btnY + 2, 0xFFFFFFFF);
+                    PhoneFont.draw(stack, "\u260F", callX + 2, btnY + 2, 0xFFFFFFFF);
                 }
 
                 // Bouton supprimer "x"
                 int delX = phoneX + phoneWidth - 14;
                 int delY = itemY + (ITEM_H - 8) / 2;
                 boolean delHov = isInBounds(mouseX, mouseY, delX, delY - 2, 10, 12);
-                getFont().draw(stack, "x", delX, delY,
+                PhoneFont.draw(stack, "x", delX, delY,
                         delHov ? 0xFFFF4444 : 0xFF444466);
             }
 
@@ -183,12 +184,12 @@ public class AppContacts extends AbstractPhoneApp {
             if (scrollOffset > 0) {
                 int arrY = listTop - 1;
                 int arX = phoneX + phoneWidth / 2 - 2;
-                getFont().draw(stack, "^", arX, arrY, 0xFF555577);
+                PhoneFont.draw(stack, "^", arX, arrY, 0xFF555577);
             }
             if (scrollOffset + maxVisible < contacts.size()) {
                 int arrY = listTop + maxVisible * ITEM_H;
                 int arX = phoneX + phoneWidth / 2 - 2;
-                getFont().draw(stack, "v", arX, arrY, 0xFF555577);
+                PhoneFont.draw(stack, "v", arX, arrY, 0xFF555577);
             }
         }
 
@@ -199,8 +200,8 @@ public class AppContacts extends AbstractPhoneApp {
                 phoneX + phoneWidth / 2 - 22, addBtnY, 44, 14,
                 addHov ? 0xFF3355CC : 0xFF1A2E88);
         String addLabel = "Ajouter";
-        int alw = getFont().width(addLabel);
-        getFont().draw(stack, addLabel,
+        int alw = PhoneFont.width(addLabel);
+        PhoneFont.draw(stack, addLabel,
                 phoneX + (phoneWidth - alw) / 2.0F, addBtnY + 3, 0xFFFFFFFF);
     }
 
@@ -210,21 +211,21 @@ public class AppContacts extends AbstractPhoneApp {
         drawTitleBar(stack, mouseX, mouseY);
 
         // Nom
-        getFont().draw(stack, "Nom *", phoneX + 8, phoneY + 34, 0xFFAAAAAA);
+        PhoneFont.draw(stack, "Nom *", phoneX + 8, phoneY + 34, 0xFFAAAAAA);
         PhoneRenderHelper.fillRect(stack, phoneX + 6, phoneY + 43, phoneWidth - 12, 14, 0xFF111128);
         pseudoField.y = phoneY + 46;
         pseudoField.render(stack, mouseX, mouseY, partialTicks);
 
         // Numero (optionnel)
-        getFont().draw(stack, "Numero (optionnel)", phoneX + 8, phoneY + 64, 0xFFAAAAAA);
+        PhoneFont.draw(stack, "Numero (optionnel)", phoneX + 8, phoneY + 64, 0xFFAAAAAA);
         PhoneRenderHelper.fillRect(stack, phoneX + 6, phoneY + 73, phoneWidth - 12, 14, 0xFF111128);
         numberField.y = phoneY + 76;
         numberField.render(stack, mouseX, mouseY, partialTicks);
 
         // Message d'erreur
         if (!errorMsg.isEmpty()) {
-            int ew = getFont().width(errorMsg);
-            getFont().draw(stack, errorMsg,
+            int ew = PhoneFont.width(errorMsg);
+            PhoneFont.draw(stack, errorMsg,
                     phoneX + (phoneWidth - ew) / 2.0F,
                     phoneY + 93,
                     0xFFFF4444);
@@ -236,17 +237,17 @@ public class AppContacts extends AbstractPhoneApp {
         PhoneRenderHelper.fillRect(stack, phoneX + 10, confirmY, phoneWidth - 20, 14,
                 confHov ? 0xFF3355CC : 0xFF1A2E88);
         String confirmLabel = "Confirmer";
-        int cw = getFont().width(confirmLabel);
-        getFont().draw(stack, confirmLabel,
+        int cw = PhoneFont.width(confirmLabel);
+        PhoneFont.draw(stack, confirmLabel,
                 phoneX + (phoneWidth - cw) / 2.0F, confirmY + 3, 0xFFFFFFFF);
 
         // Lien Annuler
         int cancelY = confirmY + 22;
         String cancelLabel = "Annuler";
-        int canw = getFont().width(cancelLabel);
+        int canw = PhoneFont.width(cancelLabel);
         boolean canHov = isInBounds(mouseX, mouseY,
                 phoneX + (phoneWidth - canw) / 2, cancelY, canw, 9);
-        getFont().draw(stack, cancelLabel,
+        PhoneFont.draw(stack, cancelLabel,
                 phoneX + (phoneWidth - canw) / 2.0F, cancelY,
                 canHov ? 0xFFFFFFFF : 0xFF888899);
     }
@@ -335,7 +336,7 @@ public class AppContacts extends AbstractPhoneApp {
         // Annuler
         int cancelY = confirmY + 22;
         String cancelLabel = "Annuler";
-        int canw = getFont().width(cancelLabel);
+        int canw = PhoneFont.width(cancelLabel);
         if (isInBounds(mx, my, phoneX + (phoneWidth - canw) / 2, cancelY, canw, 9)) {
             state = STATE_LIST;
             errorMsg = "";

@@ -14,13 +14,37 @@ import com.districtlife.phone.screen.AbstractPhoneApp;
 import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.List;
+import com.districtlife.phone.util.PhoneFont;
 
 @OnlyIn(Dist.CLIENT)
 public class AppPhone extends AbstractPhoneApp {
+
+    // -------------------------------------------------------------------------
+    // Textures GUI
+    // -------------------------------------------------------------------------
+
+    private static final ResourceLocation TEX_TAB_BG        = new ResourceLocation("districtlife_phone", "textures/gui/phone/tab_bg.png");
+    private static final ResourceLocation TEX_TAB_NORMAL    = new ResourceLocation("districtlife_phone", "textures/gui/phone/tab_normal.png");
+    private static final ResourceLocation TEX_TAB_SELECTED  = new ResourceLocation("districtlife_phone", "textures/gui/phone/tab_selected.png");
+    private static final ResourceLocation TEX_TAB_HOVER     = new ResourceLocation("districtlife_phone", "textures/gui/phone/tab_hover.png");
+    private static final ResourceLocation TEX_TAB_UNDERLINE = new ResourceLocation("districtlife_phone", "textures/gui/phone/tab_underline.png");
+    private static final ResourceLocation TEX_TAB_SEPARATOR = new ResourceLocation("districtlife_phone", "textures/gui/phone/tab_separator.png");
+    private static final ResourceLocation TEX_NUMBER_DISPLAY    = new ResourceLocation("districtlife_phone", "textures/gui/phone/number_display.png");
+    private static final ResourceLocation TEX_BTN_KEY           = new ResourceLocation("districtlife_phone", "textures/gui/phone/btn_key.png");
+    private static final ResourceLocation TEX_BTN_KEY_DEL       = new ResourceLocation("districtlife_phone", "textures/gui/phone/btn_key_del.png");
+    private static final ResourceLocation TEX_BTN_CALL          = new ResourceLocation("districtlife_phone", "textures/gui/phone/btn_call.png");
+    private static final ResourceLocation TEX_BTN_CALL_DISABLED = new ResourceLocation("districtlife_phone", "textures/gui/phone/btn_call_disabled.png");
+    private static final ResourceLocation TEX_JOURNAL_ROW_EVEN  = new ResourceLocation("districtlife_phone", "textures/gui/phone/journal_row_even.png");
+    private static final ResourceLocation TEX_JOURNAL_ROW_ODD   = new ResourceLocation("districtlife_phone", "textures/gui/phone/journal_row_odd.png");
+    private static final ResourceLocation TEX_BTN_RECALL  = new ResourceLocation("districtlife_phone", "textures/gui/phone/btn_recall.png");
+    private static final ResourceLocation TEX_BTN_ACCEPT  = new ResourceLocation("districtlife_phone", "textures/gui/phone/btn_accept.png");
+    private static final ResourceLocation TEX_BTN_DECLINE = new ResourceLocation("districtlife_phone", "textures/gui/phone/btn_decline.png");
+    private static final ResourceLocation TEX_BTN_HANGUP  = new ResourceLocation("districtlife_phone", "textures/gui/phone/btn_hangup.png");
 
     // -------------------------------------------------------------------------
     // Onglets IDLE
@@ -88,25 +112,26 @@ public class AppPhone extends AbstractPhoneApp {
         int tabW  = phoneWidth / 2;
 
         // Fond de la barre
-        PhoneRenderHelper.fillRect(stack, phoneX, tabY, phoneWidth, TAB_H, 0xFF0D0D1E);
+        PhoneRenderHelper.drawTexture(stack, TEX_TAB_BG, phoneX, tabY, phoneWidth, TAB_H);
 
         for (int t = 0; t < 2; t++) {
             int tx      = phoneX + t * tabW;
             boolean sel = idleTab == t;
             boolean hov = isIn(mouseX, mouseY, tx, tabY, tabW, TAB_H);
 
-            PhoneRenderHelper.fillRect(stack, tx, tabY, tabW, TAB_H,
-                    sel ? 0xFF1A2A4E : (hov ? 0xFF16203A : 0xFF0D0D1E));
+            // Fond de l'onglet selon son etat
+            ResourceLocation tabTex = sel ? TEX_TAB_SELECTED : (hov ? TEX_TAB_HOVER : TEX_TAB_NORMAL);
+            PhoneRenderHelper.drawTexture(stack, tabTex, tx, tabY, tabW, TAB_H);
 
             // Soulignement de l'onglet actif
-            if (sel) PhoneRenderHelper.fillRect(stack, tx, tabY + TAB_H - 2, tabW, 2, 0xFF4488FF);
+            if (sel) PhoneRenderHelper.drawTexture(stack, TEX_TAB_UNDERLINE, tx, tabY + TAB_H - 2, tabW, 2);
 
-            // Separateur vertical
-            if (t == 0) PhoneRenderHelper.fillRect(stack, tx + tabW - 1, tabY, 1, TAB_H, 0xFF222244);
+            // Separateur vertical entre onglets
+            if (t == 0) PhoneRenderHelper.drawTexture(stack, TEX_TAB_SEPARATOR, tx + tabW - 1, tabY, 1, TAB_H);
 
             String label = (t == TAB_DIAL) ? "Clavier" : "Journal";
-            int lw = getFont().width(label);
-            getFont().draw(stack, label, tx + (tabW - lw) / 2.0F, tabY + (TAB_H - 8) / 2.0F,
+            int lw = PhoneFont.width(label);
+            PhoneFont.draw(stack, label, tx + (tabW - lw) / 2.0F, tabY + (TAB_H - 8) / 2.0F,
                     sel ? 0xFFFFFFFF : 0xFF8888AA);
         }
     }
@@ -118,10 +143,10 @@ public class AppPhone extends AbstractPhoneApp {
 
         // Affichage du numero saisi
         int dispH = 20;
-        PhoneRenderHelper.fillRect(stack, phoneX + 4, contentY + 4, phoneWidth - 8, dispH, 0xFF111128);
+        PhoneRenderHelper.drawTexture(stack, TEX_NUMBER_DISPLAY, phoneX + 4, contentY + 4, phoneWidth - 8, dispH);
         String display = dialDigits.isEmpty() ? "\u2014\u2014\u2014" : formatPhoneDigits(dialDigits);
-        int dw = getFont().width(display);
-        getFont().draw(stack, display,
+        int dw = PhoneFont.width(display);
+        PhoneFont.draw(stack, display,
                 phoneX + (phoneWidth - dw) / 2.0F, contentY + 4 + (dispH - 8) / 2.0F,
                 dialDigits.isEmpty() ? 0xFF444466 : 0xFFEEEEEE);
 
@@ -138,27 +163,26 @@ public class AppPhone extends AbstractPhoneApp {
             int bx  = phoneX + 4 + col * (btnW + 2);
             int by  = kbY + row * (btnH + gapH);
 
-            boolean hov = isIn(mouseX, mouseY, bx, by, btnW, btnH);
+            boolean hov   = isIn(mouseX, mouseY, bx, by, btnW, btnH);
             boolean isDel = KEY_LABELS[i].equals("\u232B");
-            int bg = isDel ? (hov ? 0xFF552222 : 0xFF331111)
-                           : (hov ? 0xFF334466 : 0xFF1A2033);
-            PhoneRenderHelper.fillRect(stack, bx, by, btnW, btnH, bg);
-            PhoneRenderHelper.drawBorder(stack, bx, by, btnW, btnH, 1, 0xFF2A3A55);
+            PhoneRenderHelper.drawTexture(stack, isDel ? TEX_BTN_KEY_DEL : TEX_BTN_KEY, bx, by, btnW, btnH);
+            if (hov) PhoneRenderHelper.fillRect(stack, bx, by, btnW, btnH, 0x33FFFFFF);
 
             String lbl = KEY_LABELS[i];
-            int lw = getFont().width(lbl);
-            getFont().draw(stack, lbl, bx + (btnW - lw) / 2.0F, by + (btnH - 8) / 2.0F, 0xFFCCCCDD);
+            int lw = PhoneFont.width(lbl);
+            PhoneFont.draw(stack, lbl, bx + (btnW - lw) / 2.0F, by + (btnH - 8) / 2.0F, 0xFFCCCCDD);
         }
 
         // Bouton Appeler
         int callBtnY = kbY + 4 * (btnH + gapH) + 4;
         boolean canCall  = dialDigits.length() >= 1;
         boolean callHov  = canCall && isIn(mouseX, mouseY, phoneX + 6, callBtnY, phoneWidth - 12, 14);
-        PhoneRenderHelper.fillRect(stack, phoneX + 6, callBtnY, phoneWidth - 12, 14,
-                !canCall ? 0xFF1A3322 : (callHov ? 0xFF33CC55 : 0xFF116633));
+        PhoneRenderHelper.drawTexture(stack, canCall ? TEX_BTN_CALL : TEX_BTN_CALL_DISABLED,
+                phoneX + 6, callBtnY, phoneWidth - 12, 14);
+        if (callHov) PhoneRenderHelper.fillRect(stack, phoneX + 6, callBtnY, phoneWidth - 12, 14, 0x33FFFFFF);
         String callLbl = "Appeler";
-        int clw = getFont().width(callLbl);
-        getFont().draw(stack, callLbl,
+        int clw = PhoneFont.width(callLbl);
+        PhoneFont.draw(stack, callLbl,
                 phoneX + (phoneWidth - clw) / 2.0F, callBtnY + 3,
                 canCall ? 0xFFFFFFFF : 0xFF446655);
     }
@@ -174,8 +198,8 @@ public class AppPhone extends AbstractPhoneApp {
 
         if (log.isEmpty()) {
             String msg = "Aucun appel recent";
-            getFont().draw(stack, msg,
-                    phoneX + (phoneWidth - getFont().width(msg)) / 2.0F,
+            PhoneFont.draw(stack, msg,
+                    phoneX + (phoneWidth - PhoneFont.width(msg)) / 2.0F,
                     contentY + listH / 2.0F - 4,
                     0xFF555566);
             return;
@@ -188,8 +212,9 @@ public class AppPhone extends AbstractPhoneApp {
             CallLogEntry e   = log.get(i);
             int itemY = contentY + rel * JOURNAL_ITEM_H;
 
-            PhoneRenderHelper.fillRect(stack, phoneX, itemY, phoneWidth, JOURNAL_ITEM_H - 1,
-                    rel % 2 == 0 ? 0x22FFFFFF : 0x11FFFFFF);
+            PhoneRenderHelper.drawTexture(stack,
+                    rel % 2 == 0 ? TEX_JOURNAL_ROW_EVEN : TEX_JOURNAL_ROW_ODD,
+                    phoneX, itemY, phoneWidth, JOURNAL_ITEM_H - 1);
 
             // Icone de type
             String icon;
@@ -200,12 +225,12 @@ public class AppPhone extends AbstractPhoneApp {
                 case INCOMING: icon = "\u2190"; iconColor = 0xFF4488FF; typeLabel = "Entrant";  break;
                 default:       icon = "\u2197"; iconColor = 0xFFFF4444; typeLabel = "Manque";   break;
             }
-            getFont().draw(stack, icon, phoneX + 4, itemY + (JOURNAL_ITEM_H - 8) / 2.0F, iconColor);
+            PhoneFont.draw(stack, icon, phoneX + 4, itemY + (JOURNAL_ITEM_H - 8) / 2.0F, iconColor);
 
             // Nom ou numero
             String name = e.displayName.isEmpty() || e.displayName.equals(e.number)
                     ? e.number : e.displayName;
-            getFont().draw(stack, name, phoneX + 14, itemY + 3, 0xFFEEEEEE);
+            PhoneFont.draw(stack, name, phoneX + 14, itemY + 3, 0xFFEEEEEE);
 
             // Type + numero en petit
             stack.pushPose();
@@ -213,22 +238,23 @@ public class AppPhone extends AbstractPhoneApp {
             stack.scale(0.75F, 0.75F, 1F);
             String sub = e.displayName.equals(e.number)
                     ? typeLabel : typeLabel + "  " + e.number;
-            getFont().draw(stack, sub, 0, 0, 0xFF666688);
+            PhoneFont.draw(stack, sub, 0, 0, 0xFF666688);
             stack.popPose();
 
             // Bouton rappeler
             int rX = phoneX + phoneWidth - 22;
             int rY = itemY + (JOURNAL_ITEM_H - 12) / 2;
             boolean rHov = isIn(mouseX, mouseY, rX, rY, 18, 12);
-            PhoneRenderHelper.fillRect(stack, rX, rY, 18, 12, rHov ? 0xFF33CC55 : 0xFF116633);
-            getFont().draw(stack, ">>", rX + 2, rY + 2, 0xFFFFFFFF);
+            PhoneRenderHelper.drawTexture(stack, TEX_BTN_RECALL, rX, rY, 18, 12);
+            if (rHov) PhoneRenderHelper.fillRect(stack, rX, rY, 18, 12, 0x33FFFFFF);
+            PhoneFont.draw(stack, ">>", rX + 2, rY + 2, 0xFFFFFFFF);
         }
 
         // Scroll indicators
         if (journalScroll > 0)
-            getFont().draw(stack, "^", phoneX + phoneWidth / 2 - 2, contentY - 1, 0xFF555577);
+            PhoneFont.draw(stack, "^", phoneX + phoneWidth / 2 - 2, contentY - 1, 0xFF555577);
         if (journalScroll + maxVis < log.size())
-            getFont().draw(stack, "v", phoneX + phoneWidth / 2 - 2,
+            PhoneFont.draw(stack, "v", phoneX + phoneWidth / 2 - 2,
                     contentY + maxVis * JOURNAL_ITEM_H, 0xFF555577);
     }
 
@@ -281,8 +307,10 @@ public class AppPhone extends AbstractPhoneApp {
         boolean acceptHov  = isIn(mouseX, mouseY, acceptX,  btnY, btnW, btnH);
         boolean declineHov = isIn(mouseX, mouseY, declineX, btnY, btnW, btnH);
 
-        PhoneRenderHelper.fillRect(stack, acceptX,  btnY, btnW, btnH, acceptHov  ? 0xFF33CC55 : 0xFF116633);
-        PhoneRenderHelper.fillRect(stack, declineX, btnY, btnW, btnH, declineHov ? 0xFFCC3333 : 0xFF882222);
+        PhoneRenderHelper.drawTexture(stack, TEX_BTN_ACCEPT, acceptX, btnY, btnW, btnH);
+        if (acceptHov)  PhoneRenderHelper.fillRect(stack, acceptX,  btnY, btnW, btnH, 0x33FFFFFF);
+        PhoneRenderHelper.drawTexture(stack, TEX_BTN_DECLINE, declineX, btnY, btnW, btnH);
+        if (declineHov) PhoneRenderHelper.fillRect(stack, declineX, btnY, btnW, btnH, 0x33FFFFFF);
         renderBtnLabel(stack, "Repondre", acceptX,  btnY, btnW, btnH);
         renderBtnLabel(stack, "Refuser",  declineX, btnY, btnW, btnH);
     }
@@ -296,7 +324,6 @@ public class AppPhone extends AbstractPhoneApp {
 
         String phone       = PhoneCallState.getOtherPhone();
         String displayName = resolveDisplayName(phone);
-        if (displayName.equals(phone)) displayName = PhoneCallState.getOtherMcName();
 
         int cy = phoneY + phoneHeight / 2 - 40;
         renderCenteredBig(stack, displayName, cy);
@@ -329,13 +356,14 @@ public class AppPhone extends AbstractPhoneApp {
         int btnX = phoneX + (phoneWidth - btnW) / 2;
         int btnY = phoneY + phoneHeight - 28;
         boolean hov = isIn(mouseX, mouseY, btnX, btnY, btnW, btnH);
-        PhoneRenderHelper.fillRect(stack, btnX, btnY, btnW, btnH, hov ? 0xFFDD3333 : 0xFF992222);
+        PhoneRenderHelper.drawTexture(stack, TEX_BTN_HANGUP, btnX, btnY, btnW, btnH);
+        if (hov) PhoneRenderHelper.fillRect(stack, btnX, btnY, btnW, btnH, 0x33FFFFFF);
         renderBtnLabel(stack, "Raccrocher", btnX, btnY, btnW, btnH);
     }
 
     private void renderBtnLabel(MatrixStack stack, String label, int bx, int by, int bw, int bh) {
-        getFont().draw(stack, label,
-                bx + (bw - getFont().width(label)) / 2.0F,
+        PhoneFont.draw(stack, label,
+                bx + (bw - PhoneFont.width(label)) / 2.0F,
                 by + (bh - 8) / 2.0F,
                 0xFFFFFFFF);
     }
@@ -344,7 +372,7 @@ public class AppPhone extends AbstractPhoneApp {
         stack.pushPose();
         stack.translate(phoneX + phoneWidth / 2.0F, y, 0);
         stack.scale(1.1F, 1.1F, 1F);
-        getFont().draw(stack, text, -getFont().width(text) / 2.0F, 0, 0xFFEEEEEE);
+        PhoneFont.draw(stack, text, -PhoneFont.width(text) / 2.0F, 0, 0xFFEEEEEE);
         stack.popPose();
     }
 
@@ -352,7 +380,7 @@ public class AppPhone extends AbstractPhoneApp {
         stack.pushPose();
         stack.translate(phoneX + phoneWidth / 2.0F, y, 0);
         stack.scale(0.8F, 0.8F, 1F);
-        getFont().draw(stack, text, -getFont().width(text) / 2.0F, 0, color);
+        PhoneFont.draw(stack, text, -PhoneFont.width(text) / 2.0F, 0, color);
         stack.popPose();
     }
 
@@ -493,19 +521,20 @@ public class AppPhone extends AbstractPhoneApp {
      * displayName peut etre vide si inconnu (sera resolu localement depuis les contacts).
      */
     public void startCall(String targetPhone, String displayName) {
-        String rawNumber = targetPhone.replaceAll("[^0-9]", "");
-        if (rawNumber.isEmpty()) return;
+        String rawDigits = targetPhone.replaceAll("[^0-9]", "");
+        if (rawDigits.isEmpty()) return;
+        // Conserve le format "06 XX XX XX XX" (avec espaces) coherent avec le NBT des telephones
+        String formattedNumber = formatPhoneDigits(rawDigits);
 
         String name = (displayName == null || displayName.isEmpty())
-                ? resolveDisplayName(rawNumber) : displayName;
+                ? resolveDisplayName(formattedNumber) : displayName;
 
-        // Log sortant
         long tick = Minecraft.getInstance().player.level.getGameTime();
-        CallLogClient.add(new CallLogEntry(rawNumber, name, CallLogEntry.Type.OUTGOING, tick));
+        CallLogClient.add(new CallLogEntry(formattedNumber, name, CallLogEntry.Type.OUTGOING, tick));
 
-        PhoneCallState.setCalling(rawNumber, name);
+        PhoneCallState.setCalling(formattedNumber, name);
         PacketHandler.CHANNEL.sendToServer(
-                new PacketCallSignal(CallSignal.CALL, phoneScreen.getPhoneNumber(), rawNumber));
+                new PacketCallSignal(CallSignal.CALL, phoneScreen.getPhoneNumber(), formattedNumber));
 
         dialDigits = "";
     }
@@ -514,7 +543,6 @@ public class AppPhone extends AbstractPhoneApp {
         String callerPhone = PhoneCallState.getOtherPhone();
         String callerName  = resolveDisplayName(callerPhone);
 
-        // Log entrant
         long tick = Minecraft.getInstance().player.level.getGameTime();
         CallLogClient.add(new CallLogEntry(callerPhone, callerName, CallLogEntry.Type.INCOMING, tick));
 
@@ -524,6 +552,7 @@ public class AppPhone extends AbstractPhoneApp {
 
     private void declineCall() {
         String callerPhone = PhoneCallState.getOtherPhone();
+        com.districtlife.phone.network.PhoneClientHandler.stopRingSound();
         PhoneCallState.reset();
         PacketHandler.CHANNEL.sendToServer(
                 new PacketCallSignal(CallSignal.DECLINE, phoneScreen.getPhoneNumber(), callerPhone));
@@ -532,13 +561,13 @@ public class AppPhone extends AbstractPhoneApp {
     }
 
     private void hangup() {
-        // Si on raccroche pendant RINGING (appel entrant ignore) → log manque
         if (PhoneCallState.getState() == CallState.RINGING) {
             String phone = PhoneCallState.getOtherPhone();
             long tick = Minecraft.getInstance().player.level.getGameTime();
             CallLogClient.add(new CallLogEntry(phone, resolveDisplayName(phone),
                     CallLogEntry.Type.MISSED, tick));
         }
+        com.districtlife.phone.network.PhoneClientHandler.stopRingSound();
         PhoneCallState.reset();
         PacketHandler.CHANNEL.sendToServer(
                 new PacketCallSignal(CallSignal.HANGUP, phoneScreen.getPhoneNumber(), ""));

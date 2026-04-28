@@ -64,6 +64,28 @@ public final class PhoneNetEvent {
     /** Un SMS entrant vient d'etre recu. */
     public static class SmsNotify extends Event {}
 
+    /**
+     * Un SMS a ete traite cote serveur.
+     * Posté sur MinecraftForge.EVENT_BUS depuis PacketSendSMS.handle.
+     * deliveredOnline = true si le destinataire avait le telephone en main et a recu le SMS en jeu.
+     */
+    public static class SmsSent extends Event {
+        public final String  senderPhone;
+        public final String  receiverPhone;
+        public final String  message;
+        public final long    timestamp;
+        public final boolean deliveredOnline;
+
+        public SmsSent(String senderPhone, String receiverPhone,
+                       String message, long timestamp, boolean deliveredOnline) {
+            this.senderPhone     = senderPhone;
+            this.receiverPhone   = receiverPhone;
+            this.message         = message;
+            this.timestamp       = timestamp;
+            this.deliveredOnline = deliveredOnline;
+        }
+    }
+
     /** Ouvre l'ecran du boitier telephonique. */
     public static class OpenPhoneFix extends Event {
         public final String   phoneNumber;

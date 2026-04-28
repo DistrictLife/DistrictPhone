@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import com.districtlife.phone.util.PhoneFont;
 
 /**
  * Application carte du telephone.
@@ -153,8 +154,8 @@ public class AppMap extends AbstractPhoneApp {
         // Debug overlay Dynmap (F3 pour afficher/masquer)
         if (showDebug && DynmapClient.hasUrl()) {
             String dbg = DynmapClient.getDebugInfo();
-            PhoneRenderHelper.fillRect(stack, mapX, mapY + BAR_H, getFont().width(dbg) + 4, 10, 0xCC000000);
-            getFont().draw(stack, dbg, mapX + 2, mapY + BAR_H + 1, 0xFFFFFF00);
+            PhoneRenderHelper.fillRect(stack, mapX, mapY + BAR_H, PhoneFont.width(dbg) + 4, 10, 0xCC000000);
+            PhoneFont.draw(stack, dbg, mapX + 2, mapY + BAR_H + 1, 0xFFFFFF00);
         }
     }
 
@@ -423,12 +424,12 @@ public class AppMap extends AbstractPhoneApp {
 
             // Nom du point (si suffisamment zooме)
             if (zoom >= 0.15f) {
-                int textW = getFont().width(p.name);
+                int textW = PhoneFont.width(p.name);
                 int lx = sx - textW / 2;
                 int ly = sz + 6;
                 // Fond semi-transparent derriere le label
                 PhoneRenderHelper.fillRect(stack, lx - 1, ly - 1, textW + 2, 10, 0xAA000000);
-                getFont().draw(stack, p.name, lx, ly, p.color);
+                PhoneFont.draw(stack, p.name, lx, ly, p.color);
             }
         }
     }
@@ -445,7 +446,7 @@ public class AppMap extends AbstractPhoneApp {
         PhoneRenderHelper.fillRect(stack, btnX, btnY, 14, 12, hov ? 0xCC224477 : 0x99224477);
         PhoneRenderHelper.drawBorder(stack, btnX, btnY, 14, 12, 1, 0xFF4488CC);
         // Symbole "point de visee" ◎
-        getFont().draw(stack, "\u25CE", btnX + 2, btnY + 2, 0xFFCCEEFF);
+        PhoneFont.draw(stack, "\u25CE", btnX + 2, btnY + 2, 0xFFCCEEFF);
     }
 
     private void drawZoomButtons(MatrixStack stack, int mouseX, int mouseY,
@@ -461,8 +462,8 @@ public class AppMap extends AbstractPhoneApp {
         PhoneRenderHelper.fillRect (stack, btnX, btnYOut, 14, 14, hovOut ? 0xCC334455 : 0x99334455);
         PhoneRenderHelper.drawBorder(stack, btnX, btnYIn,  14, 14, 1, 0xFF446688);
         PhoneRenderHelper.drawBorder(stack, btnX, btnYOut, 14, 14, 1, 0xFF446688);
-        getFont().draw(stack, "+", btnX + 4, btnYIn  + 3, 0xFFFFFFFF);
-        getFont().draw(stack, "-", btnX + 5, btnYOut + 3, 0xFFFFFFFF);
+        PhoneFont.draw(stack, "+", btnX + 4, btnYIn  + 3, 0xFFFFFFFF);
+        PhoneFont.draw(stack, "-", btnX + 5, btnYOut + 3, 0xFFFFFFFF);
     }
 
     // -------------------------------------------------------------------------
@@ -484,13 +485,13 @@ public class AppMap extends AbstractPhoneApp {
 
         int barX = mapX + 4;
         int barY = mapY + mapH - 11;
-        int textW = getFont().width(label);
+        int textW = PhoneFont.width(label);
 
         PhoneRenderHelper.fillRect(stack, barX - 1, barY - 2, barPx + 6 + textW, 11, 0x88000000);
         PhoneRenderHelper.fillRect(stack, barX, barY + 4,      barPx, 2, 0xDDFFFFFF);
         PhoneRenderHelper.fillRect(stack, barX, barY + 2,          1, 6, 0xDDFFFFFF);
         PhoneRenderHelper.fillRect(stack, barX + barPx - 1, barY + 2, 1, 6, 0xDDFFFFFF);
-        getFont().draw(stack, label, barX + barPx + 3, barY + 1, 0xFFFFFFFF);
+        PhoneFont.draw(stack, label, barX + barPx + 3, barY + 1, 0xFFFFFFFF);
     }
 
     /** Arrondit a une valeur "lisible" pour la legende d'echelle. */

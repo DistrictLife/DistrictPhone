@@ -4,12 +4,12 @@ import com.districtlife.phone.screen.AbstractPhoneApp;
 import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.function.BooleanSupplier;
+import com.districtlife.phone.util.PhoneFont;
 
 @OnlyIn(Dist.CLIENT)
 public class AppIcon {
@@ -28,6 +28,11 @@ public class AppIcon {
         this(x, y, size, label, iconName, app, null);
     }
 
+    private static final ResourceLocation TEX_ICON_BG =
+            new ResourceLocation("districtlife_phone", "textures/gui/phone/icon_bg.png");
+    private static final ResourceLocation TEX_ICON_BG_HOVER =
+            new ResourceLocation("districtlife_phone", "textures/gui/phone/icon_bg_hover.png");
+
     public AppIcon(int x, int y, int size, String label, String iconName,
                    AbstractPhoneApp app, BooleanSupplier notifSupplier) {
         this.x = x;
@@ -44,24 +49,17 @@ public class AppIcon {
     public void render(MatrixStack stack, int mouseX, int mouseY, float partialTicks) {
         boolean hovered = isHovered(mouseX, mouseY);
 
-        // Fond de l'icone (arrondi simule avec un rect, legerement eclairci si hover)
-        int bgColor = hovered ? 0x88FFFFFF : 0x55FFFFFF;
-        PhoneRenderHelper.fillRect(stack, x, y, size, size, bgColor);
+        // Fond de l'icone
+        PhoneRenderHelper.drawTexture(stack, hovered ? TEX_ICON_BG_HOVER : TEX_ICON_BG, x, y, size, size);
 
         // Texture de l'icone
         PhoneRenderHelper.drawTexture(stack, iconTexture, x + 4, y + 4, size - 8, size - 8);
 
-        // Label sous l'icone (scale 0.6 pour reduire la taille du texte)
-        FontRenderer font = Minecraft.getInstance().font;
-        float scale = 0.6F;
-        float labelWidth = font.width(label) * scale;
+        // Label sous l'icone
+        int labelWidth = PhoneFont.width(label);
         float labelX = x + (size - labelWidth) / 2.0F;
         float labelY = y + size + 2;
-        stack.pushPose();
-        stack.translate(labelX, labelY, 0);
-        stack.scale(scale, scale, 1.0F);
-        font.draw(stack, label, 0, 0, 0xFFFFFFFF);
-        stack.popPose();
+        PhoneFont.draw(stack, label, labelX, labelY, 0xFFFFFFFF);
 
         // Point de notification (rouge, coin superieur droit)
         if (notifSupplier != null) {

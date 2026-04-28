@@ -4,16 +4,18 @@ import com.districtlife.phone.call.PhoneCallState;
 import com.districtlife.phone.capability.Contact;
 import com.districtlife.phone.data.PhoneData;
 import com.districtlife.phone.item.PhoneItem;
+import com.districtlife.phone.screen.PhoneFixScreen;
 import com.districtlife.phone.screen.PhoneScreen;
 import com.districtlife.phone.util.PhoneRenderHelper;
 import net.minecraft.item.ItemStack;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import com.districtlife.phone.util.PhoneFont;
 
 /**
  * Barre de notification en haut de l'ecran quand un appel est en cours
@@ -22,19 +24,22 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 @OnlyIn(Dist.CLIENT)
 public class PhoneCallHud {
 
+    private static final ResourceLocation TEX_HUD_BG =
+            new ResourceLocation("districtlife_phone", "textures/gui/bg_call_hud.png");
+
     @SubscribeEvent
     public static void onRenderOverlay(RenderGameOverlayEvent.Post event) {
         if (event.getType() != RenderGameOverlayEvent.ElementType.ALL) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
-        if (mc.screen instanceof PhoneScreen) return; // l'app gere l'affichage
+        if (mc.screen instanceof PhoneScreen) return;   // l'app gere l'affichage
+        if (mc.screen instanceof PhoneFixScreen) return; // le boitier gere l'affichage
 
         PhoneCallState.CallState state = PhoneCallState.getState();
         if (state == PhoneCallState.CallState.IDLE) return;
 
         MatrixStack stack  = event.getMatrixStack();
-        FontRenderer font  = mc.font;
         int screenW = mc.getWindow().getGuiScaledWidth();
 
         String line1;
@@ -50,7 +55,7 @@ public class PhoneCallHud {
                 textColor = 0xFFFFFFFF;
                 break;
             case CALLING:
-                line1     = "Appel en cours vers " + PhoneCallState.getOtherPhone();
+                line1     = "Appel en cours vers " + resolveCallerDisplay(mc, PhoneCallState.getOtherPhone());
                 bgColor   = 0xCC1A3366;
                 textColor = 0xFFCCCCFF;
                 break;
@@ -68,11 +73,11 @@ public class PhoneCallHud {
         }
 
         int barH = line2.isEmpty() ? 14 : 24;
-        PhoneRenderHelper.fillRect(stack, 0, 0, screenW, barH, bgColor);
+        PhoneRenderHelper.drawTextureScaled(stack, TEX_HUD_BG, 0, 0, screenW, barH, 256, 24);
 
-        getFont(mc).draw(stack, line1, (screenW - font.width(line1)) / 2.0F, 3, textColor);
+        PhoneFont.draw(stack, line1, (screenW - PhoneFont.width(line1)) / 2.0F, 3, textColor);
         if (!line2.isEmpty()) {
-            getFont(mc).draw(stack, line2, (screenW - font.width(line2)) / 2.0F, 14, 0xFFAAAACC);
+            PhoneFont.draw(stack, line2, (screenW - PhoneFont.width(line2)) / 2.0F, 14, 0xFFAAAACC);
         }
     }
 
@@ -87,7 +92,4 @@ public class PhoneCallHud {
         return callerPhone;
     }
 
-    private static FontRenderer getFont(Minecraft mc) {
-        return mc.font;
-    }
 }

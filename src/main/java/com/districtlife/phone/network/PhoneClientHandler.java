@@ -69,9 +69,15 @@ public class PhoneClientHandler {
 
         CallState state = PhoneCallState.getState();
         if (state == CallState.RINGING) {
-            if (ringTick % 80 == 0)
-                playRing(mc, ModSounds.PHONE_RING.get(), 1.0f);
-            ringTick++;
+            // Si le joueur interagit avec un boitier, ring_fix.ogg joue deja cote serveur
+            if (mc.screen instanceof PhoneFixScreen) {
+                stopRing(mc);
+                ringTick = 0;
+            } else {
+                if (ringTick % 80 == 0)
+                    playRing(mc, ModSounds.PHONE_RING.get(), 1.0f);
+                ringTick++;
+            }
         } else if (state == CallState.CALLING) {
             if (ringTick % 80 == 0)
                 playRing(mc, ModSounds.PHONE_RINGBACK.get(), 0.7f);
@@ -86,6 +92,11 @@ public class PhoneClientHandler {
         stopRing(mc);
         activeRingSound = SimpleSound.forUI(soundEvent, volume);
         mc.getSoundManager().play(activeRingSound);
+    }
+
+    /** Arrete immediatement le son de sonnerie/tonalite actif (appelable depuis les ecrans). */
+    public static void stopRingSound() {
+        stopRing(Minecraft.getInstance());
     }
 
     private static void stopRing(Minecraft mc) {

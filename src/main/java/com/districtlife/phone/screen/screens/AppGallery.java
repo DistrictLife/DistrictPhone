@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.districtlife.phone.util.PhoneFont;
 
 /**
  * App Galerie Photo.
@@ -246,8 +247,8 @@ public class AppGallery extends AbstractPhoneApp {
                         && mouseY >= arrowY - 2 && mouseY <= arrowY + 10;
             boolean hovR = mouseX >= phoneX + phoneWidth - 20 && mouseX <= phoneX + phoneWidth - 6
                         && mouseY >= arrowY - 2 && mouseY <= arrowY + 10;
-            getFont().draw(stack, "<", phoneX + 8,               arrowY, hovL ? 0xFFFFFFFF : 0xFFAAAAAA);
-            getFont().draw(stack, ">", phoneX + phoneWidth - 14, arrowY, hovR ? 0xFFFFFFFF : 0xFFAAAAAA);
+            PhoneFont.draw(stack, "<", phoneX + 8,               arrowY, hovL ? 0xFFFFFFFF : 0xFFAAAAAA);
+            PhoneFont.draw(stack, ">", phoneX + phoneWidth - 14, arrowY, hovR ? 0xFFFFFFFF : 0xFFAAAAAA);
         }
 
         String counter = (fullscreenIdx + 1) + " / " + photoFiles.size();

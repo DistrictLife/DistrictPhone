@@ -1,11 +1,14 @@
 package com.districtlife.phone.screen;
 
 import com.districtlife.phone.item.PhoneItem;
+import com.districtlife.phone.util.PhoneRenderHelper;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import com.districtlife.phone.util.PhoneFont;
 
 /**
  * Classe de base pour toutes les applications du telephone.
@@ -13,6 +16,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
  */
 @OnlyIn(Dist.CLIENT)
 public abstract class AbstractPhoneApp {
+
+    private static final ResourceLocation TEX_TITLE_BAR =
+            new ResourceLocation("districtlife_phone", "textures/gui/phone/title_bar.png");
 
     protected PhoneScreen phoneScreen;
 
@@ -55,7 +61,7 @@ public abstract class AbstractPhoneApp {
     public void tick() {}
 
     protected FontRenderer getFont() {
-        return net.minecraft.client.Minecraft.getInstance().font;
+        return com.districtlife.phone.util.PhoneFont.fr();
     }
 
     /**
@@ -74,19 +80,16 @@ public abstract class AbstractPhoneApp {
      */
     protected int drawTitleBar(MatrixStack stack, int mouseX, int mouseY) {
         int barHeight = 16;
-        int barColor = 0xFF1A1A2E;
         int textColor = 0xFFFFFFFF;
 
         // fond de la barre
-        com.districtlife.phone.util.PhoneRenderHelper.fillRect(
-                stack, phoneX, phoneY, phoneWidth, barHeight, barColor);
+        PhoneRenderHelper.drawTexture(stack, TEX_TITLE_BAR, phoneX, phoneY, phoneWidth, barHeight);
 
         // bouton retour
-        getFont().draw(stack, "\u2190", phoneX + 4, phoneY + 4, textColor);
+        PhoneFont.draw(stack, "\u2190", phoneX + 4, phoneY + 4, textColor);
 
         // titre centre
-        com.districtlife.phone.util.PhoneRenderHelper.drawCenteredText(
-                stack, getFont(), getTitle(), phoneX, phoneY + 4, phoneWidth, textColor);
+        PhoneFont.drawCentered(stack, getTitle(), phoneX, phoneY + 4, phoneWidth, textColor);
 
         return barHeight;
     }
@@ -109,9 +112,9 @@ public abstract class AbstractPhoneApp {
      */
     protected void drawPlaceholder(MatrixStack stack) {
         String text = "Bientot disponible";
-        int textWidth = getFont().width(text);
+        int textWidth = PhoneFont.width(text);
         int x = phoneX + (phoneWidth - textWidth) / 2;
         int y = phoneY + phoneHeight / 2 - 4;
-        getFont().draw(stack, text, x, y, 0xFF888888);
+        PhoneFont.draw(stack, text, x, y, 0xFF888888);
     }
 }

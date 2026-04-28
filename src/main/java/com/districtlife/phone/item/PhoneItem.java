@@ -92,12 +92,17 @@ public class PhoneItem extends Item {
      * ou ItemStack.EMPTY si introuvable.
      */
     public static ItemStack findPhoneStack(PlayerEntity player, String phoneNumber) {
+        // Normalise les deux cotes (supprime espaces) pour tolerer des formats differents
+        String normalized = phoneNumber.replaceAll("[^0-9]", "");
+        if (normalized.isEmpty()) return ItemStack.EMPTY;
         for (ItemStack stack : player.inventory.items) {
-            if (stack.getItem() instanceof PhoneItem && getPhoneNumber(stack).equals(phoneNumber))
+            if (stack.getItem() instanceof PhoneItem
+                    && getPhoneNumber(stack).replaceAll("[^0-9]", "").equals(normalized))
                 return stack;
         }
         for (ItemStack stack : player.inventory.offhand) {
-            if (stack.getItem() instanceof PhoneItem && getPhoneNumber(stack).equals(phoneNumber))
+            if (stack.getItem() instanceof PhoneItem
+                    && getPhoneNumber(stack).replaceAll("[^0-9]", "").equals(normalized))
                 return stack;
         }
         return ItemStack.EMPTY;
