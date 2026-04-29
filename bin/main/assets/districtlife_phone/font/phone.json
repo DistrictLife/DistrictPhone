@@ -1,0 +1,26 @@
+{
+    "providers": [
+        {
+            "type": "space",
+            "advances": { " ": 4 }
+        },
+        {
+            "type": "bitmap",
+            "file": "districtlife_phone:font/font_bitmap.png",
+            "ascent": 7,
+            "height": 9,
+            "chars": [
+                "!\"#$%&'()*+,-./012",
+                "3456789:;<=>?@ABCDE",
+                "FGHIJKLMNOPQRSTUVWX",
+                "YZ[\\]^_`abcdefghijk",
+                "lmnopqrstuvwxyz{|}~"
+            ]
+        },
+        {
+            "type": "legacy_unicode",
+            "sizes": "minecraft:font/glyph_sizes.bin",
+            "template": "minecraft:font/unicode_page_%s.png"
+        }
+    ]
+}

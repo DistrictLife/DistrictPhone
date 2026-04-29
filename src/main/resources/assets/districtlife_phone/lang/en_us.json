@@ -1,0 +1,21 @@
+{
+  "block.districtlife_phone.phone_fix": "Phone Box",
+
+  "item.districtlife_phone.phone": "DiPhone",
+  "item.districtlife_phone.phone.desc": "Your personal RP phone.",
+
+  "command.districtlife_phone.give.success": "Phone given to %s (number: %s).",
+  "command.districtlife_phone.reset.success": "Phone of %s has been reset.",
+
+  "app.districtlife_phone.soon": "Coming soon",
+  "app.districtlife_phone.unlock": "Press to unlock",
+
+  "app.districtlife_phone.phone.title": "Phone",
+  "app.districtlife_phone.sms.title": "SMS",
+  "app.districtlife_phone.contacts.title": "Contacts",
+  "app.districtlife_phone.map.title": "Map",
+  "app.districtlife_phone.news.title": "News",
+  "app.districtlife_phone.camera.title": "Camera",
+  "app.districtlife_phone.gallery.title": "Gallery",
+  "app.districtlife_phone.settings.title": "Settings"
+}

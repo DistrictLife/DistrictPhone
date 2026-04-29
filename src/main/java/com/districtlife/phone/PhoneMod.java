@@ -14,6 +14,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.eventbus.api.IEventBus;
 
@@ -41,5 +42,9 @@ public class PhoneMod {
                 () -> () -> MinecraftForge.EVENT_BUS.register(PhoneCallHud.class));
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
                 () -> () -> MinecraftForge.EVENT_BUS.register(PhoneClientHandler.class));
+
+        // Propriete item screen_open (client uniquement)
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+                () -> () -> modBus.addListener(ClientSetup::init));
     }
 }
